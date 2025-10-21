@@ -88,13 +88,14 @@ const Layout = ({ children }) => {
         width={200}
         collapsedWidth={80}
         style={{
-          background: token.colorBgContainer,
-          borderRight: `1px solid ${token.colorBorder}`,
-          position: 'fixed',
+          overflow: 'auto',
           height: '100vh',
+          position: 'fixed',
           left: 0,
           top: 0,
-          zIndex: 100,
+          bottom: 0,
+          background: token.colorBgContainer,
+          borderRight: `1px solid ${token.colorBorder}`,
         }}
       >
         <div style={{ 
@@ -117,10 +118,13 @@ const Layout = ({ children }) => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{ border: 'none' }}
+          style={{ border: 'none', height: 'calc(100% - 64px)' }}
         />
       </Sider>
-      <AntLayout style={{ marginLeft: collapsed ? 80 : 200, transition: 'margin-left 0.2s' }}>
+      <AntLayout style={{ 
+        marginLeft: collapsed ? 80 : 200,
+        transition: 'all 0.2s',
+      }}>
         <Header style={{ 
           padding: '0 24px', 
           background: token.colorBgContainer,
@@ -128,9 +132,8 @@ const Layout = ({ children }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+          height: 64,
+          lineHeight: '64px',
         }}>
           <Button
             type="text"
@@ -156,13 +159,17 @@ const Layout = ({ children }) => {
           </div>
         </Header>
         <Content style={{ 
-          margin: '24px',
-          padding: '24px',
-          background: token.colorBgContainer,
-          borderRadius: token.borderRadius,
-          minHeight: 'calc(100vh - 112px)',
+          margin: '24px 24px 0',
+          overflow: 'initial',
         }}>
-          {children}
+          <div style={{
+            padding: 24,
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadius,
+            minHeight: 360,
+          }}>
+            {children}
+          </div>
         </Content>
       </AntLayout>
     </AntLayout>
