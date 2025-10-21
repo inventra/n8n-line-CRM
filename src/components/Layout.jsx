@@ -85,9 +85,16 @@ const Layout = ({ children }) => {
         trigger={null} 
         collapsible 
         collapsed={collapsed}
+        width={200}
+        collapsedWidth={80}
         style={{
           background: token.colorBgContainer,
           borderRight: `1px solid ${token.colorBorder}`,
+          position: 'fixed',
+          height: '100vh',
+          left: 0,
+          top: 0,
+          zIndex: 100,
         }}
       >
         <div style={{ 
@@ -113,7 +120,7 @@ const Layout = ({ children }) => {
           style={{ border: 'none' }}
         />
       </Sider>
-      <AntLayout>
+      <AntLayout style={{ marginLeft: collapsed ? 80 : 200, transition: 'margin-left 0.2s' }}>
         <Header style={{ 
           padding: '0 24px', 
           background: token.colorBgContainer,
@@ -121,6 +128,9 @@ const Layout = ({ children }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
         }}>
           <Button
             type="text"

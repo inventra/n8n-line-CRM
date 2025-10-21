@@ -1,5 +1,20 @@
 /* LINE CRM 系統樣式 */
 
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+#root {
+  height: 100%;
+}
+
 .App {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -12,6 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .login-card {
@@ -19,8 +35,9 @@
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
   padding: 40px;
-  max-width: 400px;
+  max-width: 500px;
   width: 100%;
+  margin: 0 auto;
 }
 
 /* 儀表板樣式 */
@@ -122,8 +139,39 @@
   padding: 16px;
 }
 
+/* Layout 樣式修復 */
+.ant-layout {
+  min-height: 100vh;
+}
+
+.ant-layout-sider {
+  position: fixed !important;
+  height: 100vh !important;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.ant-layout-content {
+  margin-left: 200px;
+  transition: margin-left 0.2s;
+}
+
+.ant-layout-sider-collapsed + .ant-layout .ant-layout-content {
+  margin-left: 80px;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
+  .ant-layout-sider {
+    position: fixed !important;
+    z-index: 1000;
+  }
+  
+  .ant-layout-content {
+    margin-left: 0 !important;
+  }
+  
   .ant-card {
     margin-bottom: 16px;
   }
@@ -144,6 +192,7 @@
   .login-card {
     max-width: 100% !important;
     margin: 0 !important;
+    padding: 20px !important;
   }
 }
 

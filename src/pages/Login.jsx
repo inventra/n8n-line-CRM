@@ -183,23 +183,8 @@ const Login = () => {
   }
 
   return (
-    <div className="login-container" style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px',
-    }}>
-      <Card 
-        className="login-card"
-        style={{ 
-          width: '100%', 
-          maxWidth: 500,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          borderRadius: '12px',
-        }}
-      >
+    <div className="login-container">
+      <Card className="login-card">
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <LineOutlined style={{ fontSize: 48, color: '#00B900', marginBottom: 16 }} />
           <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
