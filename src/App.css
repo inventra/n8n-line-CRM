@@ -140,9 +140,6 @@ html, body {
 }
 
 /* Layout 樣式修復 */
-.ant-layout {
-  min-height: 100vh;
-}
 
 /* 響應式設計 */
 @media (max-width: 768px) {

@@ -80,7 +80,7 @@ const Layout = ({ children }) => {
   ];
 
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
+    <AntLayout>
       <Sider 
         trigger={null} 
         collapsible 
