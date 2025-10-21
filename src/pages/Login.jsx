@@ -19,6 +19,9 @@ const Login = () => {
   const [showConfigModal, setShowConfigModal] = useState(false);
 
   useEffect(() => {
+    // 載入已保存的設定
+    loadSavedConfig();
+    
     // 檢查 URL 參數中是否有 LINE 授權碼
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -31,6 +34,53 @@ const Login = () => {
       handleLineCallback(code);
     }
   }, []);
+
+  const loadSavedConfig = async () => {
+    try {
+      // 先從本地存儲載入
+      const savedConfig = localStorage.getItem('line_crm_config');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        setLineConfig(config);
+        console.log('已載入本地設定:', config);
+      }
+
+      // 如果有 API，也從資料庫載入
+      if (import.meta.env.VITE_API_BASE) {
+        await loadConfigFromDatabase();
+      }
+    } catch (error) {
+      console.error('載入設定失敗:', error);
+    }
+  };
+
+  const loadConfigFromDatabase = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings?key=in.(LINE_CHANNEL_ACCESS_TOKEN,LINE_CHANNEL_SECRET)`);
+      if (response.ok) {
+        const settings = await response.json();
+        const config = {};
+        
+        settings.forEach(setting => {
+          if (setting.key === 'LINE_CHANNEL_ACCESS_TOKEN') {
+            config.clientId = setting.value;
+          } else if (setting.key === 'LINE_CHANNEL_SECRET') {
+            config.clientSecret = setting.value;
+          }
+        });
+
+        if (config.clientId || config.clientSecret) {
+          setLineConfig(prev => ({
+            ...prev,
+            ...config
+          }));
+          console.log('已載入資料庫設定:', config);
+        }
+      }
+    } catch (error) {
+      console.error('從資料庫載入設定失敗:', error);
+    }
+  };
 
   const handleLineCallback = async (code) => {
     setLoading(true);
@@ -61,13 +111,61 @@ const Login = () => {
     window.location.href = LINE_AUTH_URL;
   };
 
-  const handleConfigSave = (values) => {
-    setLineConfig({
-      ...lineConfig,
-      ...values
-    });
-    setShowConfigModal(false);
-    message.success('LINE 憑證設定成功！');
+  const handleConfigSave = async (values) => {
+    try {
+      // 保存到本地存儲
+      localStorage.setItem('line_crm_config', JSON.stringify({
+        ...lineConfig,
+        ...values
+      }));
+      
+      setLineConfig({
+        ...lineConfig,
+        ...values
+      });
+      setShowConfigModal(false);
+      message.success('LINE 憑證設定成功！');
+      
+      // 如果有 API，也保存到資料庫
+      if (import.meta.env.VITE_API_BASE) {
+        await saveConfigToDatabase(values);
+      }
+    } catch (error) {
+      console.error('保存設定失敗:', error);
+      message.error('保存設定失敗');
+    }
+  };
+
+  const saveConfigToDatabase = async (values) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: 'LINE_CHANNEL_ACCESS_TOKEN',
+          value: values.clientId,
+          description: 'LINE Bot Channel Access Token'
+        }),
+      });
+
+      if (response.ok) {
+        await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            key: 'LINE_CHANNEL_SECRET',
+            value: values.clientSecret,
+            description: 'LINE Bot Channel Secret'
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('保存到資料庫失敗:', error);
+    }
   };
 
   if (loading) {
@@ -150,8 +248,18 @@ const Login = () => {
             }}
             block
           >
-            設定 LINE 憑證
+            {lineConfig.clientId ? '更新 LINE 憑證' : '設定 LINE 憑證'}
           </Button>
+
+          {lineConfig.clientId && (
+            <Alert
+              message="憑證已設定"
+              description={`已設定 LINE Client ID: ${lineConfig.clientId.substring(0, 8)}...`}
+              type="success"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+          )}
         </Space>
 
         <div style={{ marginTop: 24, textAlign: 'center' }}>

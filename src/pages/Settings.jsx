@@ -43,22 +43,38 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      // 模擬 API 調用
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 模擬設定數據
-      const mockSettings = {
-        LINE_CHANNEL_ACCESS_TOKEN: '',
-        LINE_CHANNEL_SECRET: '',
-        SYSTEM_NAME: 'LINE CRM',
-        VERSION: '1.0.0',
-        MAINTENANCE_MODE: false,
-        WEBHOOK_URL: '',
-        N8N_WEBHOOK_URL: '',
-      };
-      
-      setSettings(mockSettings);
-      form.setFieldsValue(mockSettings);
+      if (import.meta.env.VITE_API_BASE) {
+        // 從 API 載入設定
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`);
+        if (response.ok) {
+          const settingsData = await response.json();
+          const settingsObj = {};
+          
+          settingsData.forEach(setting => {
+            settingsObj[setting.key] = setting.value;
+          });
+          
+          setSettings(settingsObj);
+          form.setFieldsValue(settingsObj);
+        } else {
+          throw new Error('無法載入設定');
+        }
+      } else {
+        // 模擬設定數據
+        const mockSettings = {
+          LINE_CHANNEL_ACCESS_TOKEN: '',
+          LINE_CHANNEL_SECRET: '',
+          SYSTEM_NAME: 'LINE CRM',
+          VERSION: '1.0.0',
+          MAINTENANCE_MODE: false,
+          WEBHOOK_URL: '',
+          N8N_WEBHOOK_URL: '',
+        };
+        
+        setSettings(mockSettings);
+        form.setFieldsValue(mockSettings);
+      }
     } catch (error) {
       console.error('獲取設定失敗:', error);
       message.error('獲取設定失敗');
@@ -70,17 +86,51 @@ const Settings = () => {
   const handleSave = async (values) => {
     try {
       setLoading(true);
-      // 模擬 API 調用
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (import.meta.env.VITE_API_BASE) {
+        // 保存到 API
+        const savePromises = Object.entries(values).map(([key, value]) => 
+          fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              key,
+              value,
+              description: getSettingDescription(key)
+            }),
+          })
+        );
+        
+        await Promise.all(savePromises);
+        message.success('設定保存成功');
+      } else {
+        // 模擬保存
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        message.success('設定保存成功（演示模式）');
+      }
       
       setSettings(values);
-      message.success('設定保存成功');
     } catch (error) {
       console.error('保存設定失敗:', error);
       message.error('保存設定失敗');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getSettingDescription = (key) => {
+    const descriptions = {
+      'LINE_CHANNEL_ACCESS_TOKEN': 'LINE Bot Channel Access Token',
+      'LINE_CHANNEL_SECRET': 'LINE Bot Channel Secret',
+      'SYSTEM_NAME': '系統名稱',
+      'VERSION': '系統版本',
+      'MAINTENANCE_MODE': '維護模式',
+      'WEBHOOK_URL': 'Webhook URL',
+      'N8N_WEBHOOK_URL': 'n8n Webhook URL'
+    };
+    return descriptions[key] || key;
   };
 
   const handleTestConnection = async () => {
