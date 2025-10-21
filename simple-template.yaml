@@ -145,7 +145,8 @@ spec:
                     default: ${POSTGRES_USER}
                     expose: true
             configs:
-                - id: init-sql
+                - path: /docker-entrypoint-initdb.d/init.sql
+                  template: FILE
                   content: |
                     -- LINE CRM MVP 資料庫初始化腳本
                     -- 建立基本的資料庫結構
