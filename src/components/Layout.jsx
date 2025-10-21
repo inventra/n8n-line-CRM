@@ -159,17 +159,13 @@ const Layout = ({ children }) => {
           </div>
         </Header>
         <Content style={{ 
-          margin: '24px 24px 0',
-          overflow: 'initial',
+          margin: '24px',
+          padding: 24,
+          background: token.colorBgContainer,
+          borderRadius: token.borderRadius,
+          minHeight: 'calc(100vh - 112px)',
         }}>
-          <div style={{
-            padding: 24,
-            background: token.colorBgContainer,
-            borderRadius: token.borderRadius,
-            minHeight: 360,
-          }}>
-            {children}
-          </div>
+          {children}
         </Content>
       </AntLayout>
     </AntLayout>
