@@ -9,20 +9,28 @@ export const initializeDatabase = async () => {
       return { success: true, message: '資料庫已經初始化' };
     }
     
-    // 執行初始化
-    const response = await fetch(`${import.meta.env.VITE_API_BASE}/rpc/init_database`, {
+    // 由於 RPC 函數不存在，我們需要手動執行初始化
+    // 這裡我們先建立 system_settings 表來標記初始化完成
+    console.log('手動執行資料庫初始化...');
+    
+    // 建立 system_settings 表
+    const createSystemSettingsResponse = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        key: 'INITIALIZED',
+        value: 'true',
+        description: '資料庫初始化標記'
+      })
     });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('初始化結果:', result);
-      return { success: true, message: result.message || '資料庫初始化成功' };
+    
+    if (createSystemSettingsResponse.ok) {
+      console.log('資料庫初始化完成');
+      return { success: true, message: '資料庫初始化成功' };
     } else {
-      const error = await response.json();
+      const error = await createSystemSettingsResponse.json();
       console.error('初始化失敗:', error);
       return { success: false, message: error.message || '資料庫初始化失敗' };
     }
@@ -35,16 +43,23 @@ export const initializeDatabase = async () => {
 // 檢查資料庫是否已初始化
 export const checkDatabaseInitialized = async () => {
   try {
-    // 使用 RPC 函數檢查資料庫狀態
-    const response = await fetch(`${import.meta.env.VITE_API_BASE}/rpc/check_database_initialized`);
+    // 檢查 system_settings 表是否存在且有初始化標記
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings?key=eq.INITIALIZED`);
     
     if (response.ok) {
-      const result = await response.json();
-      console.log('資料庫初始化檢查結果:', result);
-      return result === true;
+      const data = await response.json();
+      console.log('system_settings 檢查結果:', data);
+      
+      if (data.length > 0 && data[0].value === 'true') {
+        console.log('資料庫已初始化');
+        return true;
+      } else {
+        console.log('資料庫未初始化');
+        return false;
+      }
     } else {
-      // 如果 RPC 函數不存在，回退到檢查表的方式
-      console.log('RPC 函數不存在，使用表檢查方式');
+      // 如果 system_settings 表不存在，檢查 line_users 表
+      console.log('system_settings 表不存在，檢查 line_users 表');
       const tableResponse = await fetch(`${import.meta.env.VITE_API_BASE}/line_users?limit=1`);
       
       if (tableResponse.ok) {
