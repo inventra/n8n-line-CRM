@@ -47,7 +47,9 @@ export const AuthProvider = ({ children }) => {
       if (import.meta.env.VITE_API_BASE) {
         console.log('檢查資料庫狀態，API 基礎 URL:', import.meta.env.VITE_API_BASE);
         const isInitialized = await checkDatabaseInitialized();
-        console.log('資料庫初始化狀態:', isInitialized);
+        console.log('資料庫初始化狀態:', isInitialized, '類型:', typeof isInitialized);
+        console.log('isInitialized === false:', isInitialized === false);
+        console.log('!isInitialized:', !isInitialized);
         if (!isInitialized) {
           console.log('資料庫未初始化，顯示初始化模態框');
           setShowDatabaseInit(true);
