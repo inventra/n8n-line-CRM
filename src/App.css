@@ -135,6 +135,16 @@
   .ant-statistic-content {
     font-size: 18px;
   }
+  
+  /* 登入頁面響應式 */
+  .login-container {
+    padding: 10px !important;
+  }
+  
+  .login-card {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
 }
 
 @media (max-width: 576px) {
@@ -155,6 +165,20 @@
   .ant-table-tbody > tr > td {
     padding: 8px;
     font-size: 12px;
+  }
+  
+  /* 小螢幕登入頁面 */
+  .login-container {
+    padding: 5px !important;
+  }
+  
+  .login-card {
+    padding: 16px !important;
+  }
+  
+  .ant-btn {
+    height: 44px !important;
+    font-size: 14px !important;
   }
 }
 

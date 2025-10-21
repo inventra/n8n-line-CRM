@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Typography, Space, Alert, Spin } from 'antd';
-import { LineOutlined, LoginOutlined } from '@ant-design/icons';
+import { Card, Button, Typography, Space, Alert, Spin, Modal, Form, Input, message } from 'antd';
+import { LineOutlined, LoginOutlined, SettingOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   // LINE 登入配置
-  const LINE_CLIENT_ID = 'YOUR_LINE_CLIENT_ID'; // 需要從環境變數或設定中獲取
-  const REDIRECT_URI = `${window.location.origin}/login`;
-  const LINE_AUTH_URL = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=line_crm&scope=profile%20openid`;
+  const [lineConfig, setLineConfig] = useState({
+    clientId: '',
+    clientSecret: '',
+    redirectUri: `${window.location.origin}/login`
+  });
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   useEffect(() => {
     // 檢查 URL 參數中是否有 LINE 授權碼
@@ -36,7 +40,22 @@ const Login = () => {
   };
 
   const handleLineLogin = () => {
+    if (!lineConfig.clientId) {
+      setShowConfigModal(true);
+      return;
+    }
+    
+    const LINE_AUTH_URL = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${lineConfig.clientId}&redirect_uri=${encodeURIComponent(lineConfig.redirectUri)}&state=line_crm&scope=profile%20openid`;
     window.location.href = LINE_AUTH_URL;
+  };
+
+  const handleConfigSave = (values) => {
+    setLineConfig({
+      ...lineConfig,
+      ...values
+    });
+    setShowConfigModal(false);
+    message.success('LINE 憑證設定成功！');
   };
 
   if (loading) {
@@ -54,7 +73,7 @@ const Login = () => {
   }
 
   return (
-    <div style={{ 
+    <div className="login-container" style={{ 
       display: 'flex', 
       justifyContent: 'center', 
       alignItems: 'center', 
@@ -63,9 +82,10 @@ const Login = () => {
       padding: '20px',
     }}>
       <Card 
+        className="login-card"
         style={{ 
           width: '100%', 
-          maxWidth: 400,
+          maxWidth: 500,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           borderRadius: '12px',
         }}
@@ -88,22 +108,39 @@ const Login = () => {
           style={{ marginBottom: 24 }}
         />
 
-        <Button
-          type="primary"
-          size="large"
-          icon={<LoginOutlined />}
-          onClick={handleLineLogin}
-          style={{ 
-            width: '100%', 
-            height: 48,
-            fontSize: 16,
-            background: '#00B900',
-            borderColor: '#00B900',
-          }}
-          block
-        >
-          使用 LINE 登入
-        </Button>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<LoginOutlined />}
+            onClick={handleLineLogin}
+            style={{ 
+              width: '100%', 
+              height: 48,
+              fontSize: 16,
+              background: '#00B900',
+              borderColor: '#00B900',
+            }}
+            block
+          >
+            使用 LINE 登入
+          </Button>
+
+          <Button
+            type="default"
+            size="large"
+            icon={<SettingOutlined />}
+            onClick={() => setShowConfigModal(true)}
+            style={{ 
+              width: '100%', 
+              height: 48,
+              fontSize: 16,
+            }}
+            block
+          >
+            設定 LINE 憑證
+          </Button>
+        </Space>
 
         <div style={{ marginTop: 24, textAlign: 'center' }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -111,6 +148,70 @@ const Login = () => {
           </Text>
         </div>
       </Card>
+
+      {/* LINE 憑證設定模態框 */}
+      <Modal
+        title="LINE 憑證設定"
+        open={showConfigModal}
+        onCancel={() => setShowConfigModal(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          layout="vertical"
+          onFinish={handleConfigSave}
+          initialValues={lineConfig}
+        >
+          <Form.Item
+            name="clientId"
+            label="LINE Client ID"
+            rules={[{ required: true, message: '請輸入 LINE Client ID' }]}
+          >
+            <Input placeholder="請輸入 LINE Client ID" />
+          </Form.Item>
+
+          <Form.Item
+            name="clientSecret"
+            label="LINE Client Secret"
+            rules={[{ required: true, message: '請輸入 LINE Client Secret' }]}
+          >
+            <Input.Password placeholder="請輸入 LINE Client Secret" />
+          </Form.Item>
+
+          <Form.Item
+            name="redirectUri"
+            label="Callback URL"
+            tooltip="此 URL 將自動設定，通常不需要修改"
+          >
+            <Input disabled />
+          </Form.Item>
+
+          <Alert
+            message="設定說明"
+            description={
+              <div>
+                <p>1. 請到 <a href="https://developers.line.biz/" target="_blank" rel="noopener noreferrer">LINE Developers Console</a> 建立應用程式</p>
+                <p>2. 在應用程式設定中，將 Callback URL 設定為：<code>{lineConfig.redirectUri}</code></p>
+                <p>3. 複製 Client ID 和 Client Secret 到此表單</p>
+              </div>
+            }
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+
+          <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setShowConfigModal(false)}>
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit">
+                保存設定
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
