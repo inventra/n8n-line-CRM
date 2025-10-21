@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkDatabaseAfterLogin = async () => {
+    console.log('checkDatabaseAfterLogin 開始執行');
     try {
       // 如果有 API 基礎 URL，則檢查資料庫狀態
       if (import.meta.env.VITE_API_BASE) {
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }) => {
         if (!isInitialized) {
           console.log('資料庫未初始化，顯示初始化模態框');
           setShowDatabaseInit(true);
+          console.log('已執行 setShowDatabaseInit(true)');
         } else {
           console.log('資料庫已初始化，不顯示模態框');
         }
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }) => {
         setShowDatabaseInit(true);
       }
       setDatabaseChecked(true);
+      console.log('checkDatabaseAfterLogin 執行完成');
     } catch (error) {
       console.error('檢查資料庫狀態失敗:', error);
       // 即使出錯也顯示初始化提示

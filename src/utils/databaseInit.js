@@ -71,8 +71,10 @@ export const checkDatabaseInitialized = async () => {
         
         if (errorData.code === 'PGRST205' && errorData.message.includes('Could not find the table')) {
           console.log('資料庫未初始化，表不存在');
+          console.log('checkDatabaseInitialized 回傳 false');
           return false;
         }
+        console.log('其他錯誤，回傳 false');
         return false;
       }
     }
