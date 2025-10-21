@@ -45,7 +45,9 @@ export const AuthProvider = ({ children }) => {
     try {
       // 如果有 API 基礎 URL，則檢查資料庫狀態
       if (import.meta.env.VITE_API_BASE) {
+        console.log('檢查資料庫狀態，API 基礎 URL:', import.meta.env.VITE_API_BASE);
         const isInitialized = await checkDatabaseInitialized();
+        console.log('資料庫初始化狀態:', isInitialized);
         if (!isInitialized) {
           setShowDatabaseInit(true);
         }

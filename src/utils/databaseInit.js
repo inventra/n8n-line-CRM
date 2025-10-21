@@ -23,17 +23,24 @@ export const initializeDatabase = async () => {
 // 檢查資料庫是否已初始化
 export const checkDatabaseInitialized = async () => {
   try {
-    // 檢查 line_users 表是否存在且有資料
+    // 檢查 line_users 表是否存在
     const response = await fetch(`${import.meta.env.VITE_API_BASE}/line_users?limit=1`);
     
     if (response.ok) {
       // 如果 API 回應成功，表示表存在
+      console.log('資料庫已初始化，line_users 表存在');
       return true;
-    } else if (response.status === 404) {
-      // 如果回應 404，表示表不存在
+    } else {
+      // 檢查錯誤訊息
+      const errorData = await response.json();
+      console.log('資料庫檢查結果:', errorData);
+      
+      if (errorData.code === 'PGRST205' && errorData.message.includes('Could not find the table')) {
+        console.log('資料庫未初始化，表不存在');
+        return false;
+      }
       return false;
     }
-    return false;
   } catch (error) {
     console.error('檢查資料庫狀態失敗:', error);
     return false;
