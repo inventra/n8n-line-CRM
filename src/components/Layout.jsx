@@ -80,7 +80,7 @@ const Layout = ({ children }) => {
   ];
 
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
+    <AntLayout style={{ minHeight: '100vh' }} hasSider>
       <Sider 
         trigger={null} 
         collapsible 
@@ -123,7 +123,8 @@ const Layout = ({ children }) => {
       </Sider>
       <AntLayout style={{ 
         marginLeft: collapsed ? 80 : 200,
-        transition: 'all 0.2s',
+        transition: 'margin-left 0.2s',
+        minHeight: '100vh',
       }}>
         <Header style={{ 
           padding: '0 24px', 
