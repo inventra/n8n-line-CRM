@@ -38,8 +38,28 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // 模擬 LINE 登入流程
-      // 在實際應用中，這裡會調用後端 API 來驗證 LINE 授權碼
+      // 檢查是否有 API 基礎 URL
+      if (!import.meta.env.VITE_API_BASE) {
+        // 模擬登入成功（用於演示）
+        const mockUser = {
+          id: 'demo_user_001',
+          displayName: '演示用戶',
+          pictureUrl: 'https://via.placeholder.com/100',
+          lineUserId: 'U' + Math.random().toString(36).substr(2, 9),
+        };
+        
+        const mockToken = 'demo_token_' + Date.now();
+        
+        localStorage.setItem('line_crm_token', mockToken);
+        localStorage.setItem('line_crm_user', JSON.stringify(mockUser));
+        
+        setUser(mockUser);
+        setIsAuthenticated(true);
+        message.success('登入成功！');
+        return true;
+      }
+      
+      // 實際 API 調用
       const response = await fetch(`${import.meta.env.VITE_API_BASE}/auth/line-login`, {
         method: 'POST',
         headers: {

@@ -24,15 +24,27 @@ const Login = () => {
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
+    console.log('LINE 回調檢查:', { code, state });
+
     if (code && state === 'line_crm') {
+      console.log('開始處理 LINE 登入回調');
       handleLineCallback(code);
     }
   }, []);
 
   const handleLineCallback = async (code) => {
     setLoading(true);
+    console.log('處理 LINE 登入回調，授權碼:', code);
+    
     const success = await login(code);
-    if (!success) {
+    console.log('登入結果:', success);
+    
+    if (success) {
+      console.log('登入成功，重定向到儀表板');
+      // 登入成功，重定向到儀表板
+      window.location.href = '/';
+    } else {
+      console.log('登入失敗，清除 URL 參數');
       // 清除 URL 參數
       window.history.replaceState({}, document.title, window.location.pathname);
     }
