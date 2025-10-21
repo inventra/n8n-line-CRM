@@ -19,13 +19,17 @@ import './App.css';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, showDatabaseInit, databaseChecked, handleDatabaseInitSuccess } = useAuth();
   
+  console.log('ProtectedRoute 狀態:', { isAuthenticated, showDatabaseInit, databaseChecked });
+  
   // 如果正在檢查資料庫，顯示載入中
   if (isAuthenticated && !databaseChecked) {
+    console.log('顯示載入中...');
     return <div>檢查資料庫中...</div>;
   }
   
   // 如果需要初始化資料庫，顯示初始化模態框
   if (isAuthenticated && showDatabaseInit) {
+    console.log('顯示初始化模態框');
     return (
       <DatabaseInitModal
         visible={showDatabaseInit}
@@ -35,6 +39,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
+  console.log('顯示正常內容');
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 

@@ -49,7 +49,10 @@ export const AuthProvider = ({ children }) => {
         const isInitialized = await checkDatabaseInitialized();
         console.log('資料庫初始化狀態:', isInitialized);
         if (!isInitialized) {
+          console.log('資料庫未初始化，顯示初始化模態框');
           setShowDatabaseInit(true);
+        } else {
+          console.log('資料庫已初始化，不顯示模態框');
         }
       } else {
         // 如果沒有 API 基礎 URL，顯示初始化提示
