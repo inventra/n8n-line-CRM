@@ -1,0 +1,24 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: Minimal CRM Template
+spec:
+  description: Minimal CRM template for testing
+  tags: [CRM]
+  variables:
+    - key: PROJECT_PREFIX
+      type: STRING
+      name: 專案前綴名稱
+      description: 用於自動生成域名
+
+  services:
+    - name: postgres
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
+      template: PREBUILT
+      spec:
+        source:
+          image: postgres:16
+        ports:
+          - id: database
+            port: 5432
+            type: TCP

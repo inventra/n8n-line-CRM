@@ -1,0 +1,218 @@
+# yaml-language-server: $schema=https://schema.zeabur.app/template.json
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+    name: LINE CRM Simple
+spec:
+    description: Simple LINE CRM system with PostgreSQL, n8n, PostgREST, and React frontend
+    icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
+    
+    variables:
+        - key: N8N_DOMAIN
+          type: DOMAIN
+          name: n8n Domain
+          description: 請使用格式 你的前綴-n8n 例如 kevinwu-n8n
+        
+        - key: API_DOMAIN
+          type: DOMAIN
+          name: API Domain
+          description: 請使用格式 你的前綴-api 例如 kevinwu-api
+        
+        - key: FRONTEND_DOMAIN
+          type: DOMAIN
+          name: Frontend Domain
+          description: 請使用格式 你的前綴-frontend 例如 kevinwu-frontend
+    
+    tags:
+        - CRM
+        - n8n
+        - LINE
+    
+    readme: |-
+        # LINE CRM Simple System
+        
+        簡化的 LINE CRM 系統，包含 PostgreSQL、n8n、PostgREST 和 React 前端。
+        
+        ## 域名命名規範
+        
+        為了方便管理，建議使用統一的命名格式。
+        
+        如果你的前綴是 kevinwu，請依序填入：
+        1. n8n Domain: kevinwu-n8n
+        2. API Domain: kevinwu-api
+        3. Frontend Domain: kevinwu-frontend
+        
+        ## 包含的服務
+        
+        1. PostgreSQL - 資料庫，儲存 LINE 訊息和 n8n 工作流
+        2. n8n - 工作流自動化引擎，處理 LINE Webhook
+        3. PostgREST - REST API 層，提供前端資料存取
+        4. Frontend - React 前端介面，對話管理儀表板
+        
+        ## 部署後設定步驟
+        
+        ### 步驟 1：初始化資料庫
+        
+        連接到 PostgreSQL 並執行 `database/init.sql` 腳本來建立完整的資料庫結構。
+        
+        ### 步驟 2：更新 PostgREST 設定
+        
+        進入 postgrest 服務環境變數，設定：
+        PGRST_DB_ANON_ROLE=web_anon
+        
+        ### 步驟 3：設定 n8n Workflow
+        
+        訪問 n8n 域名，建立 LINE Webhook 處理流程
+        
+        ### 步驟 4：設定 LINE Webhook
+        
+        在 LINE Developers Console 設定 Webhook URL
+        
+        ### 步驟 5：補充 LINE 憑證
+        
+        在 n8n 服務環境變數中新增：
+        LINE_CHANNEL_ACCESS_TOKEN
+        LINE_CHANNEL_SECRET
+        
+        ### 步驟 6：設定 Frontend 環境變數
+        
+        在 frontend 服務環境變數中新增：
+        VITE_API_BASE=https://你的API域名.zeabur.app
+        VITE_N8N_API=https://你的n8n域名.zeabur.app
+        
+        ## 驗證部署
+        
+        1. 測試 PostgreSQL 連接
+        2. 測試 n8n 能否登入
+        3. 測試 PostgREST API
+        4. 測試 Frontend 顯示
+        5. 測試 LINE Bot 訊息接收
+    
+    services:
+        - name: postgresql
+          icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
+          template: PREBUILT_V2
+          spec:
+            source:
+                image: postgres:17
+            ports:
+                - id: database
+                  port: 5432
+                  type: TCP
+            volumes:
+                - id: data
+                  dir: /var/lib/postgresql/data
+            env:
+                PGDATA:
+                    default: /var/lib/postgresql/data/pgdata
+                POSTGRES_CONNECTION_STRING:
+                    default: postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+                    expose: true
+                POSTGRES_DATABASE:
+                    default: ${POSTGRES_DB}
+                    expose: true
+                POSTGRES_DB:
+                    default: zeabur
+                POSTGRES_HOST:
+                    default: ${CONTAINER_HOSTNAME}
+                    expose: true
+                POSTGRES_PASSWORD:
+                    default: ${PASSWORD}
+                    expose: true
+                POSTGRES_PORT:
+                    default: ${DATABASE_PORT}
+                    expose: true
+                POSTGRES_USER:
+                    default: root
+                POSTGRES_USERNAME:
+                    default: ${POSTGRES_USER}
+                    expose: true
+            configs: []
+            portForwarding:
+                enabled: true
+        
+        - name: n8n
+          icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
+          template: PREBUILT_V2
+          domainKey: N8N_DOMAIN
+          spec:
+            source:
+                image: n8nio/n8n:latest
+            ports:
+                - id: web
+                  port: 5678
+                  type: HTTP
+            volumes:
+                - id: data
+                  dir: /root/.n8n
+            env:
+                DB_POSTGRESDB_DATABASE:
+                    default: ${POSTGRES_DATABASE}
+                DB_POSTGRESDB_HOST:
+                    default: ${POSTGRES_HOST}
+                DB_POSTGRESDB_PASSWORD:
+                    default: ${POSTGRES_PASSWORD}
+                DB_POSTGRESDB_PORT:
+                    default: ${POSTGRES_PORT}
+                DB_POSTGRESDB_USER:
+                    default: ${POSTGRES_USERNAME}
+                DB_TYPE:
+                    default: postgresdb
+                N8N_HOST:
+                    default: ${ZEABUR_WEB_DOMAIN}
+                WEBHOOK_URL:
+                    default: ${ZEABUR_WEB_URL}
+            configs: []
+            portForwarding:
+                enabled: false
+        
+        - name: postgrest
+          icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/api.svg
+          template: PREBUILT_V2
+          domainKey: API_DOMAIN
+          spec:
+            source:
+                image: postgrest/postgrest:latest
+            ports:
+                - id: http
+                  port: 3000
+                  type: HTTP
+            env:
+                PGRST_DB_URI:
+                    default: ${POSTGRES_CONNECTION_STRING}
+                PGRST_DB_SCHEMA:
+                    default: public
+                PGRST_DB_ANON_ROLE:
+                    default: ${POSTGRES_USERNAME}
+            configs: []
+            portForwarding:
+                enabled: false
+        
+        - name: frontend
+          icon: https://service-icons.zeabur.com/git/nodejs/vite.svg
+          template: PREBUILT_V2
+          domainKey: FRONTEND_DOMAIN
+          spec:
+            source:
+                source: GITHUB
+                repo: 1080205971
+                branch: main
+                rootDirectory: /
+            ports:
+                - id: web
+                  port: 8080
+                  type: HTTP
+            env:
+                PORT:
+                    default: ${WEB_PORT}
+            configs: []
+            portForwarding:
+                enabled: false
+
+localization:
+    zh-TW:
+        description: 簡化的 LINE CRM 系統
+        readme: |
+            # LINE CRM 簡化系統
+            
+            簡化的 LINE CRM 解決方案，使用 n8n 進行工作流自動化。

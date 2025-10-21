@@ -26,6 +26,35 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
+  const [showInitModal, setShowInitModal] = useState(false);
+  const [initChecked, setInitChecked] = useState(false);
+
+  useEffect(() => {
+    // 檢查資料庫是否已初始化
+    const checkInit = async () => {
+      try {
+        // 只有在有 API 基礎 URL 時才檢查
+        if (import.meta.env.VITE_API_BASE) {
+          const isInitialized = await checkDatabaseInitialized();
+          if (!isInitialized) {
+            setShowInitModal(true);
+          }
+        }
+        setInitChecked(true);
+      } catch (error) {
+        console.error('檢查資料庫狀態失敗:', error);
+        setInitChecked(true);
+      }
+    };
+
+    checkInit();
+  }, []);
+
+  const handleInitSuccess = () => {
+    setShowInitModal(false);
+    // 可以添加其他初始化成功後的邏輯
+  };
+
   return (
     <ConfigProvider
       locale={zhTW}
@@ -63,6 +92,15 @@ function App() {
             </Routes>
           </div>
         </Router>
+        
+        {/* 資料庫初始化模態框 */}
+        {initChecked && (
+          <DatabaseInitModal
+            visible={showInitModal}
+            onClose={() => setShowInitModal(false)}
+            onSuccess={handleInitSuccess}
+          />
+        )}
       </AuthProvider>
     </ConfigProvider>
   );

@@ -1,0 +1,51 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: Basic CRM Template
+spec:
+  description: Basic CRM template with PostgreSQL and React frontend
+  tags: [CRM, PostgreSQL, React]
+  variables:
+    - key: PROJECT_PREFIX
+      type: STRING
+      name: 專案前綴名稱
+      description: 用於自動生成域名
+    - key: FRONTEND_REPO_ID
+      type: STRING
+      name: 前端 GitHub repoID
+      description: 你的前端 GitHub 數字 repoID
+    - key: FRONTEND_REPO_BRANCH
+      type: STRING
+      name: 前端分支
+      description: 要部署的分支
+
+  services:
+    - name: postgres
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
+      template: PREBUILT
+      spec:
+        source:
+          image: postgres:16
+        ports:
+          - id: database
+            port: 5432
+            type: TCP
+        env:
+          POSTGRES_DB:
+            default: crm
+          POSTGRES_USER:
+            default: crm
+          POSTGRES_PASSWORD:
+            default: ${PASSWORD}
+
+    - name: frontend
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/react.svg
+      template: GIT
+      domainKey: FRONTEND_DOMAIN
+      dependencies: [postgres]
+      spec:
+        source:
+          git:
+            type: GITHUB
+            repoID: ${FRONTEND_REPO_ID}
+            branch: ${FRONTEND_REPO_BRANCH}
