@@ -213,6 +213,10 @@ spec:
             env:
                 PORT:
                     default: ${WEB_PORT}
+                VITE_API_BASE:
+                    default: https://${API_DOMAIN}
+                VITE_N8N_API:
+                    default: https://${N8N_DOMAIN}
             configs: []
             portForwarding:
                 enabled: false
