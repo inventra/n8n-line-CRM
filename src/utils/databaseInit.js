@@ -1,6 +1,15 @@
 // 資料庫初始化工具
 export const initializeDatabase = async () => {
   try {
+    console.log('開始執行資料庫初始化...');
+    
+    // 首先檢查是否已經初始化
+    const isInitialized = await checkDatabaseInitialized();
+    if (isInitialized) {
+      return { success: true, message: '資料庫已經初始化' };
+    }
+    
+    // 執行初始化
     const response = await fetch(`${import.meta.env.VITE_API_BASE}/rpc/init_database`, {
       method: 'POST',
       headers: {
@@ -9,37 +18,48 @@ export const initializeDatabase = async () => {
     });
 
     if (response.ok) {
-      return { success: true, message: '資料庫初始化成功' };
+      const result = await response.json();
+      console.log('初始化結果:', result);
+      return { success: true, message: result.message || '資料庫初始化成功' };
     } else {
       const error = await response.json();
+      console.error('初始化失敗:', error);
       return { success: false, message: error.message || '資料庫初始化失敗' };
     }
   } catch (error) {
     console.error('資料庫初始化錯誤:', error);
-    return { success: false, message: '資料庫初始化失敗' };
+    return { success: false, message: '資料庫初始化失敗: ' + error.message };
   }
 };
 
 // 檢查資料庫是否已初始化
 export const checkDatabaseInitialized = async () => {
   try {
-    // 檢查 line_users 表是否存在
-    const response = await fetch(`${import.meta.env.VITE_API_BASE}/line_users?limit=1`);
+    // 使用 RPC 函數檢查資料庫狀態
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/rpc/check_database_initialized`);
     
     if (response.ok) {
-      // 如果 API 回應成功，表示表存在
-      console.log('資料庫已初始化，line_users 表存在');
-      return true;
+      const result = await response.json();
+      console.log('資料庫初始化檢查結果:', result);
+      return result === true;
     } else {
-      // 檢查錯誤訊息
-      const errorData = await response.json();
-      console.log('資料庫檢查結果:', errorData);
+      // 如果 RPC 函數不存在，回退到檢查表的方式
+      console.log('RPC 函數不存在，使用表檢查方式');
+      const tableResponse = await fetch(`${import.meta.env.VITE_API_BASE}/line_users?limit=1`);
       
-      if (errorData.code === 'PGRST205' && errorData.message.includes('Could not find the table')) {
-        console.log('資料庫未初始化，表不存在');
+      if (tableResponse.ok) {
+        console.log('資料庫已初始化，line_users 表存在');
+        return true;
+      } else {
+        const errorData = await tableResponse.json();
+        console.log('資料庫檢查結果:', errorData);
+        
+        if (errorData.code === 'PGRST205' && errorData.message.includes('Could not find the table')) {
+          console.log('資料庫未初始化，表不存在');
+          return false;
+        }
         return false;
       }
-      return false;
     }
   } catch (error) {
     console.error('檢查資料庫狀態失敗:', error);

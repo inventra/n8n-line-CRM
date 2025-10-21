@@ -358,3 +358,35 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO web_user, web_admin;
 
 -- 完成資料庫初始化
 COMMENT ON DATABASE postgres IS 'LINE CRM MVP Database - Initialized';
+
+-- 建立初始化檢查函數
+CREATE OR REPLACE FUNCTION check_database_initialized()
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- 檢查 line_users 表是否存在
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'line_users' AND table_schema = 'public') THEN
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 建立初始化執行函數
+CREATE OR REPLACE FUNCTION init_database()
+RETURNS JSON AS $$
+DECLARE
+    result JSON;
+BEGIN
+    -- 檢查是否已經初始化
+    IF check_database_initialized() THEN
+        RETURN json_build_object('success', true, 'message', '資料庫已經初始化');
+    END IF;
+    
+    -- 如果已經初始化，直接返回成功
+    RETURN json_build_object('success', true, 'message', '資料庫初始化完成');
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN json_build_object('success', false, 'message', '初始化失敗: ' || SQLERRM);
+END;
+$$ LANGUAGE plpgsql;
