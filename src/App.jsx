@@ -10,6 +10,7 @@ import Groups from './pages/Groups';
 import Messages from './pages/Messages';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
+import Test from './pages/Test';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
 
@@ -46,6 +47,7 @@ function App() {
                   <Login />
                 </PublicRoute>
               } />
+              <Route path="/test" element={<Test />} />
               <Route path="/" element={
                 <ProtectedRoute>
                   <Layout>

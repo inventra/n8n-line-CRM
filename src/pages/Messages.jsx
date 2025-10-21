@@ -252,7 +252,7 @@ const Messages = () => {
               <Image
                 width={40}
                 height={40}
-                src="https://via.placeholder.com/40"
+                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjIwIiBjeT0iMTYiIHI9IjYiIGZpbGw9IiM2NjYiLz4KPHBhdGggZD0iTTggMzJDOCAyNi40IDEyLjQgMjIgMTggMjJIMjJDMjcuNiAyMiAzMiAyNi40IDMyIDMyVjQwSDhWMzJaIiBmaWxsPSIjNjY2Ii8+Cjwvc3ZnPg=="
                 placeholder="圖片"
               />
               <span>{text}</span>
