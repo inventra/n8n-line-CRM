@@ -43,12 +43,17 @@ export const AuthProvider = ({ children }) => {
 
   const checkDatabaseAfterLogin = async () => {
     try {
-      // 只有在有 API 基礎 URL 時才檢查
+      // 如果有 API 基礎 URL，則檢查資料庫狀態
       if (import.meta.env.VITE_API_BASE) {
         const isInitialized = await checkDatabaseInitialized();
         if (!isInitialized) {
           setShowDatabaseInit(true);
         }
+      } else {
+        // 如果沒有 API 基礎 URL，顯示設定提示
+        console.log('未設定 VITE_API_BASE，請先設定 API 基礎 URL');
+        // 為了測試，暫時顯示初始化提示
+        setShowDatabaseInit(true);
       }
       setDatabaseChecked(true);
     } catch (error) {

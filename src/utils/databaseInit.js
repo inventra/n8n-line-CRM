@@ -23,11 +23,15 @@ export const initializeDatabase = async () => {
 // 檢查資料庫是否已初始化
 export const checkDatabaseInitialized = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings?key=eq.VERSION`);
+    // 檢查 line_users 表是否存在且有資料
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/line_users?limit=1`);
     
     if (response.ok) {
-      const data = await response.json();
-      return data.length > 0;
+      // 如果 API 回應成功，表示表存在
+      return true;
+    } else if (response.status === 404) {
+      // 如果回應 404，表示表不存在
+      return false;
     }
     return false;
   } catch (error) {
