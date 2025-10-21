@@ -80,12 +80,20 @@ const Layout = ({ children }) => {
   ];
 
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
+    <AntLayout style={{ minHeight: '100vh' }} hasSider>
       <Sider 
         trigger={null} 
         collapsible 
         collapsed={collapsed}
+        width={200}
+        collapsedWidth={80}
         style={{
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
           background: token.colorBgContainer,
           borderRight: `1px solid ${token.colorBorder}`,
         }}
@@ -110,10 +118,14 @@ const Layout = ({ children }) => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{ border: 'none' }}
+          style={{ border: 'none', height: 'calc(100% - 64px)' }}
         />
       </Sider>
-      <AntLayout>
+      <AntLayout style={{ 
+        marginLeft: collapsed ? 80 : 200,
+        transition: 'margin-left 0.2s',
+        minHeight: '100vh',
+      }}>
         <Header style={{ 
           padding: '0 24px', 
           background: token.colorBgContainer,
@@ -121,6 +133,8 @@ const Layout = ({ children }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          height: 64,
+          lineHeight: '64px',
         }}>
           <Button
             type="text"
@@ -146,9 +160,12 @@ const Layout = ({ children }) => {
           </div>
         </Header>
         <Content style={{ 
-          margin: '24px 16px',
+          margin: '24px',
           padding: 24,
           background: token.colorBgContainer,
+          borderRadius: token.borderRadius,
+          minHeight: 'calc(100vh - 112px)',
+          overflow: 'auto',
         }}>
           {children}
         </Content>
@@ -158,4 +175,3 @@ const Layout = ({ children }) => {
 };
 
 export default Layout;
-
