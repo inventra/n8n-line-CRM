@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);

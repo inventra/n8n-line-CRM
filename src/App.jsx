@@ -51,14 +51,42 @@ function App() {
               <Route path="/" element={
                 <ProtectedRoute>
                   <Layout>
-                    <Routes>
-                      <Route index element={<Dashboard />} />
-                      <Route path="users" element={<Users />} />
-                      <Route path="groups" element={<Groups />} />
-                      <Route path="messages" element={<Messages />} />
-                      <Route path="analytics" element={<Analytics />} />
-                      <Route path="settings" element={<Settings />} />
-                    </Routes>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/users" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Users />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/groups" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Groups />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/messages" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Messages />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Analytics />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Settings />
                   </Layout>
                 </ProtectedRoute>
               } />
