@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
+import { checkDatabaseInitialized } from '../utils/databaseInit';
 
 const AuthContext = createContext();
 
@@ -15,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDatabaseInit, setShowDatabaseInit] = useState(false);
+  const [databaseChecked, setDatabaseChecked] = useState(false);
 
   useEffect(() => {
     // 檢查本地存儲中的認證狀態
@@ -25,14 +28,34 @@ export const AuthProvider = ({ children }) => {
       try {
         setUser(JSON.parse(userData));
         setIsAuthenticated(true);
+        // 登入後檢查資料庫
+        checkDatabaseAfterLogin();
       } catch (error) {
         console.error('解析用戶數據失敗:', error);
         localStorage.removeItem('line_crm_token');
         localStorage.removeItem('line_crm_user');
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
+  const checkDatabaseAfterLogin = async () => {
+    try {
+      // 只有在有 API 基礎 URL 時才檢查
+      if (import.meta.env.VITE_API_BASE) {
+        const isInitialized = await checkDatabaseInitialized();
+        if (!isInitialized) {
+          setShowDatabaseInit(true);
+        }
+      }
+      setDatabaseChecked(true);
+    } catch (error) {
+      console.error('檢查資料庫狀態失敗:', error);
+      setDatabaseChecked(true);
+    }
+  };
 
   const login = async (lineCode) => {
     try {
@@ -56,6 +79,8 @@ export const AuthProvider = ({ children }) => {
         setUser(mockUser);
         setIsAuthenticated(true);
         message.success('登入成功！');
+        // 登入後檢查資料庫
+        checkDatabaseAfterLogin();
         return true;
       }
       
@@ -78,6 +103,8 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
         message.success('登入成功！');
+        // 登入後檢查資料庫
+        checkDatabaseAfterLogin();
         return true;
       } else {
         const errorData = await response.json();
@@ -101,12 +128,20 @@ export const AuthProvider = ({ children }) => {
     message.success('已登出');
   };
 
+  const handleDatabaseInitSuccess = () => {
+    setShowDatabaseInit(false);
+    message.success('資料庫初始化完成！');
+  };
+
   const value = {
     isAuthenticated,
     user,
     loading,
     login,
     logout,
+    showDatabaseInit,
+    databaseChecked,
+    handleDatabaseInitSuccess,
   };
 
   return (

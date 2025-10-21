@@ -105,18 +105,26 @@ const DatabaseInitModal = ({ visible, onClose, onSuccess }) => {
       open={visible}
       onCancel={handleClose}
       footer={[
-        <Button key="cancel" onClick={handleClose}>
-          取消
-        </Button>,
-        <Button
-          key="init"
-          type="primary"
-          loading={loading}
-          onClick={handleInit}
-          disabled={status === 'finish'}
-        >
-          {status === 'finish' ? '完成' : '開始初始化'}
-        </Button>,
+        status === 'finish' ? (
+          <Button key="enter" type="primary" onClick={onSuccess}>
+            進入儀表板
+          </Button>
+        ) : (
+          <>
+            <Button key="cancel" onClick={handleClose}>
+              取消
+            </Button>,
+            <Button
+              key="init"
+              type="primary"
+              loading={loading}
+              onClick={handleInit}
+              disabled={status === 'finish'}
+            >
+              {status === 'finish' ? '完成' : '開始初始化'}
+            </Button>
+          </>
+        ),
       ]}
       width={600}
       closable={status !== 'process'}

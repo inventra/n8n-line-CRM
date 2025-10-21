@@ -13,12 +13,28 @@ import Analytics from './pages/Analytics';
 import Test from './pages/Test';
 import DatabaseInitModal from './components/DatabaseInitModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { checkDatabaseInitialized } from './utils/databaseInit';
 import './App.css';
 
 // 受保護的路由組件
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, showDatabaseInit, databaseChecked, handleDatabaseInitSuccess } = useAuth();
+  
+  // 如果正在檢查資料庫，顯示載入中
+  if (isAuthenticated && !databaseChecked) {
+    return <div>檢查資料庫中...</div>;
+  }
+  
+  // 如果需要初始化資料庫，顯示初始化模態框
+  if (isAuthenticated && showDatabaseInit) {
+    return (
+      <DatabaseInitModal
+        visible={showDatabaseInit}
+        onClose={() => {}}
+        onSuccess={handleDatabaseInitSuccess}
+      />
+    );
+  }
+  
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
@@ -29,34 +45,6 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
-  const [showInitModal, setShowInitModal] = useState(false);
-  const [initChecked, setInitChecked] = useState(false);
-
-  useEffect(() => {
-    // 檢查資料庫是否已初始化
-    const checkInit = async () => {
-      try {
-        // 只有在有 API 基礎 URL 時才檢查
-        if (import.meta.env.VITE_API_BASE) {
-          const isInitialized = await checkDatabaseInitialized();
-          if (!isInitialized) {
-            setShowInitModal(true);
-          }
-        }
-        setInitChecked(true);
-      } catch (error) {
-        console.error('檢查資料庫狀態失敗:', error);
-        setInitChecked(true);
-      }
-    };
-
-    checkInit();
-  }, []);
-
-  const handleInitSuccess = () => {
-    setShowInitModal(false);
-    // 可以添加其他初始化成功後的邏輯
-  };
 
   return (
     <ConfigProvider
@@ -124,15 +112,6 @@ function App() {
             </Routes>
           </div>
         </Router>
-        
-        {/* 資料庫初始化模態框 */}
-        {initChecked && (
-          <DatabaseInitModal
-            visible={showInitModal}
-            onClose={() => setShowInitModal(false)}
-            onSuccess={handleInitSuccess}
-          />
-        )}
       </AuthProvider>
     </ConfigProvider>
   );
