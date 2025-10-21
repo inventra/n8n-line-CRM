@@ -52,30 +52,28 @@ const DatabaseInitModal = ({ visible, onClose, onSuccess }) => {
         return;
       }
       
-      // 步驟 2: 建立資料表
+      // 步驟 2: 嘗試初始化
       setCurrent(1);
       setProgress(40);
-      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // 步驟 3: 插入初始數據
-      setCurrent(2);
-      setProgress(60);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await initializeDatabase();
       
-      // 步驟 4: 設定權限
-      setCurrent(3);
-      setProgress(80);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 步驟 5: 完成初始化
-      setCurrent(4);
-      setProgress(100);
-      setStatus('finish');
-      
-      message.success('資料庫初始化完成！');
-      setTimeout(() => {
-        onSuccess();
-      }, 1000);
+      if (result.success) {
+        setCurrent(4);
+        setProgress(100);
+        setStatus('finish');
+        message.success('資料庫初始化完成！');
+        setTimeout(() => {
+          onSuccess();
+        }, 1000);
+      } else if (result.requiresManualSetup) {
+        setStatus('error');
+        setCurrent(1);
+        message.warning('需要手動初始化資料庫');
+      } else {
+        setStatus('error');
+        message.error(result.message || '資料庫初始化失敗');
+      }
       
     } catch (error) {
       console.error('初始化失敗:', error);
