@@ -9,31 +9,188 @@ export const initializeDatabase = async () => {
       return { success: true, message: '資料庫已經初始化' };
     }
     
-    // 由於 RPC 函數不存在，我們需要手動執行初始化
-    // 這裡我們先建立 system_settings 表來標記初始化完成
     console.log('手動執行資料庫初始化...');
     
-    // 建立 system_settings 表
-    const createSystemSettingsResponse = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // 建立基本表結構
+    const tables = [
+      {
+        name: 'system_settings',
+        sql: `CREATE TABLE IF NOT EXISTS system_settings (
+          id SERIAL PRIMARY KEY,
+          key VARCHAR(100) UNIQUE NOT NULL,
+          value TEXT,
+          description TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
       },
-      body: JSON.stringify({
-        key: 'INITIALIZED',
-        value: 'true',
-        description: '資料庫初始化標記'
-      })
-    });
+      {
+        name: 'line_users',
+        sql: `CREATE TABLE IF NOT EXISTS line_users (
+          id SERIAL PRIMARY KEY,
+          line_user_id VARCHAR(100) UNIQUE NOT NULL,
+          display_name VARCHAR(255),
+          picture_url TEXT,
+          status_message TEXT,
+          is_friend BOOLEAN DEFAULT false,
+          custom_name VARCHAR(255),
+          tags JSONB DEFAULT '[]'::jsonb,
+          notes TEXT,
+          last_message_at TIMESTAMP,
+          message_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      },
+      {
+        name: 'line_groups',
+        sql: `CREATE TABLE IF NOT EXISTS line_groups (
+          id SERIAL PRIMARY KEY,
+          line_group_id VARCHAR(100) UNIQUE NOT NULL,
+          group_name VARCHAR(255),
+          picture_url TEXT,
+          custom_name VARCHAR(255),
+          tags JSONB DEFAULT '[]'::jsonb,
+          notes TEXT,
+          member_count INTEGER DEFAULT 0,
+          last_message_at TIMESTAMP,
+          message_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      },
+      {
+        name: 'messages',
+        sql: `CREATE TABLE IF NOT EXISTS messages (
+          id SERIAL PRIMARY KEY,
+          message_id VARCHAR(100) UNIQUE NOT NULL,
+          line_user_id VARCHAR(100),
+          line_group_id VARCHAR(100),
+          message_type VARCHAR(50) NOT NULL,
+          content TEXT,
+          original_content JSONB,
+          is_from_bot BOOLEAN DEFAULT false,
+          is_read BOOLEAN DEFAULT false,
+          sentiment_score DECIMAL(3,2),
+          keywords JSONB DEFAULT '[]'::jsonb,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      },
+      {
+        name: 'tags',
+        sql: `CREATE TABLE IF NOT EXISTS tags (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) UNIQUE NOT NULL,
+          color VARCHAR(7) DEFAULT '#3B82F6',
+          description TEXT,
+          usage_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      }
+    ];
     
-    if (createSystemSettingsResponse.ok) {
-      console.log('資料庫初始化完成');
-      return { success: true, message: '資料庫初始化成功' };
-    } else {
-      const error = await createSystemSettingsResponse.json();
-      console.error('初始化失敗:', error);
-      return { success: false, message: error.message || '資料庫初始化失敗' };
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // 嘗試建立每個表
+    for (const table of tables) {
+      try {
+        console.log(`建立表: ${table.name}`);
+        
+        // 使用 PostgREST 的 SQL 執行功能
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/rpc/exec_sql`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sql: table.sql })
+        });
+        
+        if (response.ok) {
+          successCount++;
+          console.log(`表 ${table.name} 建立成功`);
+        } else {
+          console.warn(`表 ${table.name} 建立失敗`);
+          errorCount++;
+        }
+      } catch (error) {
+        console.warn(`表 ${table.name} 建立錯誤:`, error.message);
+        errorCount++;
+      }
     }
+    
+    // 插入初始數據
+    try {
+      // 插入系統設定
+      await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: 'INITIALIZED',
+          value: 'true',
+          description: '資料庫初始化標記'
+        })
+      });
+      
+      // 插入其他系統設定
+      const systemSettings = [
+        { key: 'LINE_CHANNEL_ACCESS_TOKEN', value: '', description: 'LINE Bot Channel Access Token' },
+        { key: 'LINE_CHANNEL_SECRET', value: '', description: 'LINE Bot Channel Secret' },
+        { key: 'SYSTEM_NAME', value: 'LINE CRM', description: '系統名稱' },
+        { key: 'VERSION', value: '1.0.0', description: '系統版本' },
+        { key: 'MAINTENANCE_MODE', value: 'false', description: '維護模式' }
+      ];
+      
+      for (const setting of systemSettings) {
+        try {
+          await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(setting)
+          });
+        } catch (error) {
+          console.warn('插入系統設定失敗:', setting.key);
+        }
+      }
+      
+      // 插入預設標籤
+      const defaultTags = [
+        { name: 'VIP客戶', color: '#FF6B6B', description: '重要客戶標籤' },
+        { name: '新客戶', color: '#4ECDC4', description: '新加入的客戶' },
+        { name: '活躍用戶', color: '#45B7D1', description: '經常互動的用戶' },
+        { name: '潛在客戶', color: '#96CEB4', description: '有潛力的客戶' },
+        { name: '問題用戶', color: '#FFEAA7', description: '需要特別關注的用戶' }
+      ];
+      
+      for (const tag of defaultTags) {
+        try {
+          await fetch(`${import.meta.env.VITE_API_BASE}/tags`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tag)
+          });
+        } catch (error) {
+          console.warn('插入標籤失敗:', tag.name);
+        }
+      }
+      
+    } catch (error) {
+      console.warn('插入初始數據失敗:', error);
+    }
+    
+    console.log(`初始化完成: 成功 ${successCount} 個表, 失敗 ${errorCount} 個表`);
+    
+    return { 
+      success: successCount > 0, 
+      message: `資料庫初始化完成: 成功 ${successCount} 個表, 失敗 ${errorCount} 個表` 
+    };
   } catch (error) {
     console.error('資料庫初始化錯誤:', error);
     return { success: false, message: '資料庫初始化失敗: ' + error.message };
