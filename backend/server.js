@@ -2,9 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const { Pool } = require('pg');
 const path = require('path');
 require('dotenv').config();
+
+// 簡單的 session 存儲（實際應用中應該使用 Redis 或資料庫）
+const sessions = new Map();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,6 +72,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -212,6 +217,21 @@ app.post('/api/auth/login', async (req, res) => {
         updated_at = CURRENT_TIMESTAMP
     `, [mockUser.lineUserId, mockUser.displayName, mockUser.pictureUrl]);
     
+    // 創建 session
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    sessions.set(sessionId, {
+      user: mockUser,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 小時後過期
+    });
+    
+    // 設置 session cookie
+    res.cookie('sessionId', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 小時
+    });
+    
     res.json(mockUser);
   } catch (error) {
     console.error('登入失敗:', error);
@@ -221,9 +241,28 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/status', async (req, res) => {
   try {
-    // 簡化的認證狀態檢查（實際應用中需要檢查 session 或 JWT）
-    // 目前返回未認證狀態，讓前端處理登入流程
-    res.json({ authenticated: false });
+    const sessionId = req.cookies.sessionId;
+    
+    if (!sessionId) {
+      return res.json({ authenticated: false });
+    }
+    
+    const session = sessions.get(sessionId);
+    
+    if (!session) {
+      return res.json({ authenticated: false });
+    }
+    
+    // 檢查 session 是否過期
+    if (new Date() > session.expiresAt) {
+      sessions.delete(sessionId);
+      return res.json({ authenticated: false });
+    }
+    
+    res.json({ 
+      authenticated: true, 
+      user: session.user 
+    });
   } catch (error) {
     console.error('檢查認證狀態失敗:', error);
     res.status(500).json({ error: '檢查認證狀態失敗' });
@@ -232,7 +271,14 @@ app.get('/api/auth/status', async (req, res) => {
 
 app.post('/api/auth/logout', async (req, res) => {
   try {
-    // 簡化的登出處理（實際應用中需要清除 session 或 JWT）
+    const sessionId = req.cookies.sessionId;
+    
+    if (sessionId) {
+      sessions.delete(sessionId);
+    }
+    
+    // 清除 session cookie
+    res.clearCookie('sessionId');
     res.json({ success: true, message: '已登出' });
   } catch (error) {
     console.error('登出失敗:', error);

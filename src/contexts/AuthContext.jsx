@@ -33,9 +33,17 @@ export const AuthProvider = ({ children }) => {
         });
         
         if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          setIsAuthenticated(true);
+          const authData = await response.json();
+          if (authData.authenticated && authData.user) {
+            setUser(authData.user);
+            setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
       }
     } catch (error) {
