@@ -104,10 +104,14 @@ spec:
     services:
         - name: postgresql
           icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
-          template: PREBUILT_V2
+          template: PREBUILT
           spec:
             source:
                 image: postgres:17
+                command:
+                    - docker-entrypoint.sh
+                    - -c
+                    - config_file=/etc/postgresql/postgresql.conf
             ports:
                 - id: database
                   port: 5432
@@ -115,8 +119,6 @@ spec:
             volumes:
                 - id: data
                   dir: /var/lib/postgresql/data
-                - id: init-scripts
-                  dir: /docker-entrypoint-initdb.d
             instructions:
                 - title: Connection String
                   content: postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${PORT_FORWARDED_HOSTNAME}:${DATABASE_PORT_FORWARDED_PORT}/${POSTGRES_DATABASE}
@@ -157,7 +159,32 @@ spec:
                 POSTGRES_USERNAME:
                     default: ${POSTGRES_USER}
                     expose: true
-            configs: []
+                POSTGRES_URI:
+                    default: ${POSTGRES_CONNECTION_STRING}
+                    expose: true
+            configs:
+                - path: /etc/postgresql/postgresql.conf
+                  template: |
+                    # https://github.com/postgres/postgres/blob/master/src/backend/utils/misc/postgresql.conf.sample
+                    listen_addresses = '*'
+                    max_connections = 100
+                    shared_buffers = 128MB
+                    dynamic_shared_memory_type = posix
+                    max_wal_size = 1GB
+                    min_wal_size = 80MB
+                    log_timezone = 'Etc/UTC'
+                    datestyle = 'iso, mdy'
+                    timezone = 'Etc/UTC'
+                    lc_messages = 'en_US.utf8'
+                    lc_monetary = 'en_US.utf8'
+                    lc_numeric = 'en_US.utf8'
+                    lc_time = 'en_US.utf8'
+                    default_text_search_config = 'pg_catalog.english'
+                  permission: null
+                  envsubst: null
+            healthCheck:
+                type: TCP
+                port: database
             portForwarding:
                 enabled: true
         
@@ -165,6 +192,8 @@ spec:
           icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/nodejs.svg
           template: PREBUILT_V2
           domainKey: BACKEND_DOMAIN
+          dependencies:
+            - postgresql
           spec:
             source:
                 source: GITHUB
@@ -177,7 +206,7 @@ spec:
                   port: 3000
                   type: HTTP
             env:
-                # 資料庫連接環境變數 (類似 n8n)
+                # 資料庫連接環境變數 (修正為正確的變數名稱)
                 DB_POSTGRESDB_DATABASE:
                     default: ${POSTGRES_DATABASE}
                 DB_POSTGRESDB_HOST:
@@ -190,6 +219,17 @@ spec:
                     default: ${POSTGRES_USERNAME}
                 DB_TYPE:
                     default: postgresdb
+                # 標準 PostgreSQL 環境變數 (後端服務支援)
+                POSTGRES_DATABASE:
+                    default: ${POSTGRES_DATABASE}
+                POSTGRES_HOST:
+                    default: ${POSTGRES_HOST}
+                POSTGRES_PASSWORD:
+                    default: ${POSTGRES_PASSWORD}
+                POSTGRES_PORT:
+                    default: ${POSTGRES_PORT}
+                POSTGRES_USERNAME:
+                    default: ${POSTGRES_USERNAME}
                 # 應用程式配置
                 NODE_ENV:
                     default: production
@@ -207,6 +247,8 @@ spec:
           icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
           template: PREBUILT_V2
           domainKey: N8N_DOMAIN
+          dependencies:
+            - postgresql
           spec:
             source:
                 image: n8nio/n8n:latest
@@ -235,6 +277,11 @@ spec:
                     default: ${ZEABUR_WEB_DOMAIN}
                 WEBHOOK_URL:
                     default: ${ZEABUR_WEB_URL}
+            healthCheck:
+                type: HTTP
+                port: web
+                http:
+                    path: /healthz
             portForwarding:
                 enabled: false
         

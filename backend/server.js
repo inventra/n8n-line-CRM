@@ -9,13 +9,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 資料庫連接配置 (類似 n8n)
+// 資料庫連接配置 (支援多種環境變數格式)
 const dbConfig = {
-  host: process.env.DB_POSTGRESDB_HOST || process.env.POSTGRES_HOST,
-  port: process.env.DB_POSTGRESDB_PORT || process.env.POSTGRES_PORT,
-  database: process.env.DB_POSTGRESDB_DATABASE || process.env.POSTGRES_DATABASE,
-  user: process.env.DB_POSTGRESDB_USER || process.env.POSTGRES_USERNAME,
-  password: process.env.DB_POSTGRESDB_PASSWORD || process.env.POSTGRES_PASSWORD,
+  host: process.env.DB_POSTGRESDB_HOST || process.env.POSTGRES_HOST || 'localhost',
+  port: parseInt(process.env.DB_POSTGRESDB_PORT || process.env.POSTGRES_PORT || '5432'),
+  database: process.env.DB_POSTGRESDB_DATABASE || process.env.POSTGRES_DATABASE || 'line_crm',
+  user: process.env.DB_POSTGRESDB_USER || process.env.POSTGRES_USERNAME || 'postgres',
+  password: process.env.DB_POSTGRESDB_PASSWORD || process.env.POSTGRES_PASSWORD || 'password',
   // 修復 SSL 連接問題
   ssl: false,  // 在 Zeabur 內部網絡中不需要 SSL
   // 連接超時設定

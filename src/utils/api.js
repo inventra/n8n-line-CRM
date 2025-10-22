@@ -121,20 +121,8 @@ export const healthAPI = {
   check: () => apiRequest('/health'),
 };
 
-// 資料庫初始化 API (類似 n8n 的機制)
+// 資料庫 API (簡化版，僅用於健康檢查)
 export const databaseAPI = {
-  // 檢查資料庫是否已初始化
-  checkInitialized: async () => {
-    try {
-      const settings = await systemSettingsAPI.getAll();
-      const initialized = settings.find(s => s.key === 'INITIALIZED');
-      return initialized && initialized.value === 'true';
-    } catch (error) {
-      console.error('檢查資料庫初始化狀態失敗:', error);
-      return false;
-    }
-  },
-  
   // 獲取資料庫狀態
   getStatus: () => apiRequest('/health'),
 };
