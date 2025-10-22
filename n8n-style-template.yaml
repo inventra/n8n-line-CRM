@@ -115,6 +115,21 @@ spec:
             volumes:
                 - id: data
                   dir: /var/lib/postgresql/data
+            instructions:
+                - title: Connection String
+                  content: postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${PORT_FORWARDED_HOSTNAME}:${DATABASE_PORT_FORWARDED_PORT}/${POSTGRES_DATABASE}
+                - title: PostgreSQL Connect Command
+                  content: psql "postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${PORT_FORWARDED_HOSTNAME}:${DATABASE_PORT_FORWARDED_PORT}/${POSTGRES_DATABASE}"
+                - title: PostgreSQL username
+                  content: ${POSTGRES_USERNAME}
+                - title: PostgreSQL password
+                  content: ${POSTGRES_PASSWORD}
+                - title: PostgreSQL database
+                  content: ${POSTGRES_DATABASE}
+                - title: PostgreSQL host
+                  content: ${PORT_FORWARDED_HOSTNAME}
+                - title: PostgreSQL port
+                  content: ${DATABASE_PORT_FORWARDED_PORT}
             env:
                 PGDATA:
                     default: /var/lib/postgresql/data/pgdata
@@ -216,7 +231,7 @@ spec:
             portForwarding:
                 enabled: false
         
-        - name: frontend
+        - name: line-crm-frontend
           icon: https://service-icons.zeabur.com/git/nodejs/vite.svg
           template: PREBUILT_V2
           domainKey: FRONTEND_DOMAIN
