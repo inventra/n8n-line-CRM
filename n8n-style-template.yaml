@@ -248,12 +248,13 @@ spec:
                 repo: 1080205971
                 branch: main
                 rootDirectory: /
-                dockerfile: Dockerfile.frontend
             ports:
                 - id: web
-                  port: 80
+                  port: 8080
                   type: HTTP
             env:
+                PORT:
+                    default: ${WEB_PORT}
                 # 連接 Backend API (替代 PostgREST)
                 VITE_BACKEND_URL:
                     default: https://${BACKEND_DOMAIN}.zeabur.app
