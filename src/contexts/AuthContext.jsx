@@ -74,11 +74,21 @@ export const AuthProvider = ({ children }) => {
         
         if (response.ok) {
           const userData = await response.json();
+          console.log('登入成功，用戶資料:', userData);
           setUser(userData);
           setIsAuthenticated(true);
           message.success('登入成功！');
+          
+          // 登入成功後，立即檢查認證狀態
+          setTimeout(async () => {
+            console.log('登入後檢查認證狀態...');
+            await checkAuthStatus();
+          }, 1000);
+          
           return true;
         } else {
+          const errorData = await response.json();
+          console.error('登入失敗:', errorData);
           message.error('登入失敗，請檢查 LINE 憑證設定');
           return false;
         }

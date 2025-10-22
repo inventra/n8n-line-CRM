@@ -225,13 +225,18 @@ app.post('/api/auth/login', async (req, res) => {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 小時後過期
     });
     
+    console.log('創建 session:', sessionId);
+    console.log('當前 sessions 數量:', sessions.size);
+    
     // 設置 session cookie
     res.cookie('sessionId', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 小時
+      maxAge: 24 * 60 * 60 * 1000, // 24 小時
+      sameSite: 'lax' // 添加 sameSite 屬性
     });
     
+    console.log('設置 cookie 完成');
     res.json(mockUser);
   } catch (error) {
     console.error('登入失敗:', error);
@@ -242,23 +247,30 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/status', async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
+    console.log('檢查認證狀態 - sessionId:', sessionId);
+    console.log('當前 sessions 數量:', sessions.size);
     
     if (!sessionId) {
+      console.log('沒有 sessionId cookie');
       return res.json({ authenticated: false });
     }
     
     const session = sessions.get(sessionId);
+    console.log('找到 session:', !!session);
     
     if (!session) {
+      console.log('session 不存在');
       return res.json({ authenticated: false });
     }
     
     // 檢查 session 是否過期
     if (new Date() > session.expiresAt) {
+      console.log('session 已過期');
       sessions.delete(sessionId);
       return res.json({ authenticated: false });
     }
     
+    console.log('認證成功，用戶:', session.user.displayName);
     res.json({ 
       authenticated: true, 
       user: session.user 
