@@ -110,16 +110,37 @@ const initializeDatabase = async () => {
 
 // 執行資料庫初始化
 const initDatabase = async () => {
-  const fs = require('fs');
-  const initSQL = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
-  
-  // 分割 SQL 語句並執行
-  const statements = initSQL.split(';').filter(stmt => stmt.trim());
-  
-  for (const statement of statements) {
-    if (statement.trim()) {
-      await pool.query(statement);
+  try {
+    const fs = require('fs');
+    const initSQL = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
+    
+    // 分割 SQL 語句並執行
+    const statements = initSQL.split(';').filter(stmt => stmt.trim());
+    
+    console.log(`準備執行 ${statements.length} 個 SQL 語句`);
+    
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i].trim();
+      if (statement) {
+        try {
+          console.log(`執行語句 ${i + 1}/${statements.length}:`, statement.substring(0, 100) + '...');
+          await pool.query(statement);
+          console.log(`✅ 語句 ${i + 1} 執行成功`);
+        } catch (error) {
+          console.error(`❌ 語句 ${i + 1} 執行失敗:`, error.message);
+          console.error('語句內容:', statement);
+          // 繼續執行其他語句
+        }
+      }
     }
+    
+    // 驗證初始化結果
+    const result = await pool.query('SELECT COUNT(*) as count FROM system_settings');
+    console.log(`✅ 資料庫初始化完成，system_settings 表中有 ${result.rows[0].count} 筆記錄`);
+    
+  } catch (error) {
+    console.error('❌ 資料庫初始化失敗:', error);
+    throw error;
   }
 };
 
@@ -223,12 +244,50 @@ app.post('/api/auth/logout', async (req, res) => {
 app.get('/api/system-settings', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM system_settings ORDER BY key');
-    res.json(result.rows);
+    
+    // 如果沒有系統設定，自動初始化
+    if (result.rows.length === 0) {
+      console.log('系統設定為空，開始自動初始化...');
+      await initializeSystemSettings();
+      const newResult = await pool.query('SELECT * FROM system_settings ORDER BY key');
+      res.json(newResult.rows);
+    } else {
+      res.json(result.rows);
+    }
   } catch (error) {
     console.error('獲取系統設定失敗:', error);
     res.status(500).json({ error: '獲取系統設定失敗' });
   }
 });
+
+// 初始化系統設定
+const initializeSystemSettings = async () => {
+  try {
+    console.log('開始初始化系統設定...');
+    
+    const settings = [
+      { key: 'LINE_CHANNEL_ACCESS_TOKEN', value: '', description: 'LINE Bot Channel Access Token' },
+      { key: 'LINE_CHANNEL_SECRET', value: '', description: 'LINE Bot Channel Secret' },
+      { key: 'SYSTEM_NAME', value: 'LINE CRM', description: '系統名稱' },
+      { key: 'VERSION', value: '1.0.0', description: '系統版本' },
+      { key: 'MAINTENANCE_MODE', value: 'false', description: '維護模式' },
+      { key: 'INITIALIZED', value: 'true', description: '資料庫初始化標記' }
+    ];
+    
+    for (const setting of settings) {
+      await pool.query(`
+        INSERT INTO system_settings (key, value, description) 
+        VALUES ($1, $2, $3) 
+        ON CONFLICT (key) DO NOTHING
+      `, [setting.key, setting.value, setting.description]);
+    }
+    
+    console.log('✅ 系統設定初始化完成');
+  } catch (error) {
+    console.error('❌ 系統設定初始化失敗:', error);
+    throw error;
+  }
+};
 
 app.put('/api/system-settings/:key', async (req, res) => {
   try {
