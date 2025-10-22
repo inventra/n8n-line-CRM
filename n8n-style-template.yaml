@@ -8,6 +8,11 @@ spec:
     icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
     
     variables:
+        - key: BACKEND_DOMAIN
+          type: DOMAIN
+          name: Backend Domain
+          description: 請使用格式 你的前綴-backend 例如 kevinwu-backend
+        
         - key: FRONTEND_DOMAIN
           type: DOMAIN
           name: Frontend Domain
@@ -43,10 +48,9 @@ spec:
         為了方便管理，建議使用統一的命名格式。
         
         如果你的前綴是 kevinwu，請依序填入：
-        1. Frontend Domain: kevinwu-frontend  
-        2. n8n Domain: kevinwu-n8n
-        
-        **Backend 域名會自動生成**，無需手動填寫。
+        1. Backend Domain: kevinwu-backend
+        2. Frontend Domain: kevinwu-frontend  
+        3. n8n Domain: kevinwu-n8n
         
         ## 包含的服務
         
@@ -87,15 +91,15 @@ spec:
         ### 步驟 5：設定 Frontend 環境變數
         
         在 frontend 服務環境變數中新增：
+        VITE_BACKEND_URL=https://你的Backend域名.zeabur.app
         VITE_N8N_API=https://你的n8n域名.zeabur.app
-        
-        **VITE_BACKEND_URL 會自動設定**，無需手動填寫。
         
         ## 驗證部署
         
-        1. 測試 Frontend 顯示（Backend API 會自動連接）
-        2. 測試 n8n 能否登入
-        3. 測試 LINE Bot 訊息接收
+        1. 測試 Backend API: https://你的Backend域名.zeabur.app/api/health
+        2. 測試 Frontend 顯示
+        3. 測試 n8n 能否登入
+        4. 測試 LINE Bot 訊息接收
     
     services:
         - name: postgresql
@@ -187,6 +191,7 @@ spec:
         - name: line-crm-backend
           icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/nodejs.svg
           template: PREBUILT_V2
+          domainKey: BACKEND_DOMAIN
           dependencies:
             - postgresql
           spec:
@@ -297,10 +302,9 @@ spec:
             env:
                 PORT:
                     default: ${WEB_PORT}
-                # 連接 Backend API (使用自動生成的隨機域名)
+                # 連接 Backend API
                 VITE_BACKEND_URL:
-                    default: ${line-crm-backend.ZEABUR_SERVICE_URL}
-                    fromService: line-crm-backend
+                    default: https://${BACKEND_DOMAIN}.zeabur.app
                 VITE_N8N_API:
                     default: https://${N8N_DOMAIN}.zeabur.app
             portForwarding:
