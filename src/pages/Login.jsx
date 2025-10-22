@@ -37,17 +37,11 @@ const Login = () => {
 
   const loadSavedConfig = async () => {
     try {
-      // 先從本地存儲載入
-      const savedConfig = localStorage.getItem('line_crm_config');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        setLineConfig(config);
-        console.log('已載入本地設定:', config);
-      }
-
-      // 如果有 Backend API，也從資料庫載入
+      // 只從資料庫載入設定
       if (import.meta.env.VITE_BACKEND_URL) {
         await loadConfigFromDatabase();
+      } else {
+        console.warn('Backend URL 未設定，無法載入 LINE 憑證設定');
       }
     } catch (error) {
       console.error('載入設定失敗:', error);
@@ -76,6 +70,8 @@ const Login = () => {
           }));
           console.log('已載入資料庫設定:', config);
         }
+      } else {
+        console.error('載入系統設定失敗:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('從資料庫載入設定失敗:', error);
@@ -113,22 +109,18 @@ const Login = () => {
 
   const handleConfigSave = async (values) => {
     try {
-      // 保存到本地存儲
-      localStorage.setItem('line_crm_config', JSON.stringify({
-        ...lineConfig,
-        ...values
-      }));
-      
-      setLineConfig({
-        ...lineConfig,
-        ...values
-      });
-      setShowConfigModal(false);
-      message.success('LINE 憑證設定成功！');
-      
-      // 如果有 Backend API，也保存到資料庫
+      // 只保存到資料庫
       if (import.meta.env.VITE_BACKEND_URL) {
         await saveConfigToDatabase(values);
+        
+        setLineConfig({
+          ...lineConfig,
+          ...values
+        });
+        setShowConfigModal(false);
+        message.success('LINE 憑證設定已儲存到資料庫！');
+      } else {
+        message.error('Backend URL 未設定，無法儲存設定');
       }
     } catch (error) {
       console.error('保存設定失敗:', error);

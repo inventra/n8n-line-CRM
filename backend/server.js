@@ -142,6 +142,75 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// 認證 API
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: '缺少授權碼' });
+    }
+    
+    // 獲取 LINE 憑證設定
+    const settingsResult = await pool.query(`
+      SELECT key, value FROM system_settings 
+      WHERE key IN ('LINE_CHANNEL_ACCESS_TOKEN', 'LINE_CHANNEL_SECRET')
+    `);
+    
+    const settings = {};
+    settingsResult.rows.forEach(row => {
+      settings[row.key] = row.value;
+    });
+    
+    if (!settings.LINE_CHANNEL_ACCESS_TOKEN || !settings.LINE_CHANNEL_SECRET) {
+      return res.status(400).json({ error: 'LINE 憑證未設定' });
+    }
+    
+    // 模擬 LINE 用戶資料（實際應用中需要調用 LINE API）
+    const mockUser = {
+      id: 'user_' + Date.now(),
+      displayName: 'LINE 用戶',
+      pictureUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNDAiIHI9IjE1IiBmaWxsPSIjNjY2Ii8+CjxwYXRoIGQ9Ik0yMCA4MEMyMCA2NS42IDMxLjYgNTQgNDYgNTRINTRDNjguNCA1NCA4MCA2NS42IDgwIDgwVjEwMEgyMFY4MFoiIGZpbGw9IiM2NjYiLz4KPC9zdmc+',
+      lineUserId: 'U' + Math.random().toString(36).substr(2, 9),
+    };
+    
+    // 儲存用戶到資料庫
+    await pool.query(`
+      INSERT INTO line_users (line_user_id, display_name, picture_url, is_friend)
+      VALUES ($1, $2, $3, true)
+      ON CONFLICT (line_user_id) DO UPDATE SET
+        display_name = EXCLUDED.display_name,
+        picture_url = EXCLUDED.picture_url,
+        updated_at = CURRENT_TIMESTAMP
+    `, [mockUser.lineUserId, mockUser.displayName, mockUser.pictureUrl]);
+    
+    res.json(mockUser);
+  } catch (error) {
+    console.error('登入失敗:', error);
+    res.status(500).json({ error: '登入失敗' });
+  }
+});
+
+app.get('/api/auth/status', async (req, res) => {
+  try {
+    // 簡化的認證狀態檢查（實際應用中需要檢查 session 或 JWT）
+    res.json({ authenticated: false });
+  } catch (error) {
+    console.error('檢查認證狀態失敗:', error);
+    res.status(500).json({ error: '檢查認證狀態失敗' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    // 簡化的登出處理（實際應用中需要清除 session 或 JWT）
+    res.json({ success: true, message: '已登出' });
+  } catch (error) {
+    console.error('登出失敗:', error);
+    res.status(500).json({ error: '登出失敗' });
+  }
+});
+
 // 系統設定 API
 app.get('/api/system-settings', async (req, res) => {
   try {
