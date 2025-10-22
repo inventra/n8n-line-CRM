@@ -246,6 +246,13 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/status', async (req, res) => {
   try {
+    // 禁用緩存
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     const sessionId = req.cookies.sessionId;
     console.log('檢查認證狀態 - sessionId:', sessionId);
     console.log('當前 sessions 數量:', sessions.size);

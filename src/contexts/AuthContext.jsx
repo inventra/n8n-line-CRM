@@ -29,7 +29,12 @@ export const AuthProvider = ({ children }) => {
       if (backendUrl && !backendUrl.includes('${')) {
         // 從後端檢查認證狀態
         const response = await fetch(`${backendUrl}/api/auth/status`, {
-          credentials: 'include'
+          credentials: 'include',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         
         if (response.ok) {
@@ -67,8 +72,11 @@ export const AuthProvider = ({ children }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           },
           credentials: 'include',
+          cache: 'no-cache',
           body: JSON.stringify({ code: lineCode })
         });
         
