@@ -146,6 +146,7 @@ app.get('/api/health', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { code } = req.body;
+    console.log('收到登入請求:', { code: code ? '已提供' : '未提供' });
     
     if (!code) {
       return res.status(400).json({ error: '缺少授權碼' });
@@ -162,8 +163,14 @@ app.post('/api/auth/login', async (req, res) => {
       settings[row.key] = row.value;
     });
     
+    console.log('LINE 憑證設定:', {
+      hasAccessToken: !!settings.LINE_CHANNEL_ACCESS_TOKEN,
+      hasSecret: !!settings.LINE_CHANNEL_SECRET
+    });
+    
+    // 如果 LINE 憑證未設定，使用模擬登入
     if (!settings.LINE_CHANNEL_ACCESS_TOKEN || !settings.LINE_CHANNEL_SECRET) {
-      return res.status(400).json({ error: 'LINE 憑證未設定' });
+      console.log('LINE 憑證未設定，使用模擬登入');
     }
     
     // 模擬 LINE 用戶資料（實際應用中需要調用 LINE API）
@@ -194,6 +201,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/status', async (req, res) => {
   try {
     // 簡化的認證狀態檢查（實際應用中需要檢查 session 或 JWT）
+    // 目前返回未認證狀態，讓前端處理登入流程
     res.json({ authenticated: false });
   } catch (error) {
     console.error('檢查認證狀態失敗:', error);
