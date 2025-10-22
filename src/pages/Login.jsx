@@ -130,7 +130,14 @@ const Login = () => {
 
   const saveConfigToDatabase = async (values) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/system-settings/LINE_CHANNEL_ACCESS_TOKEN`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      console.log('Backend URL:', backendUrl);
+      
+      if (!backendUrl || backendUrl.includes('${')) {
+        throw new Error('Backend URL 未正確設定或包含未解析的變數');
+      }
+      
+      const response = await fetch(`${backendUrl}/api/system-settings/LINE_CHANNEL_ACCESS_TOKEN`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +148,7 @@ const Login = () => {
       });
 
       if (response.ok) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/system-settings/LINE_CHANNEL_SECRET`, {
+        await fetch(`${backendUrl}/api/system-settings/LINE_CHANNEL_SECRET`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

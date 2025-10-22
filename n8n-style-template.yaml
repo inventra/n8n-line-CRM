@@ -300,6 +300,7 @@ spec:
                 # 連接 Backend API (使用自動生成的隨機域名)
                 VITE_BACKEND_URL:
                     default: ${line-crm-backend.ZEABUR_SERVICE_URL}
+                    fromService: line-crm-backend
                 VITE_N8N_API:
                     default: https://${N8N_DOMAIN}.zeabur.app
             portForwarding:

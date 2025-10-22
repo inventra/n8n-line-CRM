@@ -23,9 +23,12 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      if (import.meta.env.VITE_BACKEND_URL) {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      console.log('檢查認證狀態 - Backend URL:', backendUrl);
+      
+      if (backendUrl && !backendUrl.includes('${')) {
         // 從後端檢查認證狀態
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/status`, {
+        const response = await fetch(`${backendUrl}/api/auth/status`, {
           credentials: 'include'
         });
         
@@ -47,9 +50,12 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      if (import.meta.env.VITE_BACKEND_URL) {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      console.log('登入 - Backend URL:', backendUrl);
+      
+      if (backendUrl && !backendUrl.includes('${')) {
         // 使用後端 API 進行登入
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+        const response = await fetch(`${backendUrl}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -93,9 +99,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      if (import.meta.env.VITE_BACKEND_URL) {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      
+      if (backendUrl && !backendUrl.includes('${')) {
         // 使用後端 API 進行登出
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
+        await fetch(`${backendUrl}/api/auth/logout`, {
           method: 'POST',
           credentials: 'include'
         });
