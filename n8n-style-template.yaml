@@ -1,0 +1,250 @@
+# yaml-language-server: $schema=https://schema.zeabur.app/template.json
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+    name: LINE CRM (n8n Style)
+spec:
+    description: LINE CRM system with n8n-style architecture - PostgreSQL + Backend + Frontend
+    icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
+    
+    variables:
+        - key: BACKEND_DOMAIN
+          type: DOMAIN
+          name: Backend Domain
+          description: 請使用格式 你的前綴-backend 例如 kevinwu-backend
+        
+        - key: FRONTEND_DOMAIN
+          type: DOMAIN
+          name: Frontend Domain
+          description: 請使用格式 你的前綴-frontend 例如 kevinwu-frontend
+        
+        - key: N8N_DOMAIN
+          type: DOMAIN
+          name: n8n Domain
+          description: 請使用格式 你的前綴-n8n 例如 kevinwu-n8n
+    
+    tags:
+        - CRM
+        - n8n
+        - LINE
+        - Backend
+    
+    readme: |-
+        # LINE CRM (n8n Style Architecture)
+        
+        採用類似 n8n 架構的 LINE CRM 系統，包含 PostgreSQL、Node.js 後端、React 前端和 n8n 工作流引擎。
+        
+        ## 架構說明
+        
+        **類似 n8n 的架構模式：**
+        ```
+        PostgreSQL ←→ LINE CRM Backend (Node.js) ←→ React Frontend
+                     ↑
+                   n8n (工作流引擎)
+        ```
+        
+        ## 域名命名規範
+        
+        為了方便管理，建議使用統一的命名格式。
+        
+        如果你的前綴是 kevinwu，請依序填入：
+        1. Backend Domain: kevinwu-backend
+        2. Frontend Domain: kevinwu-frontend  
+        3. n8n Domain: kevinwu-n8n
+        
+        ## 包含的服務
+        
+        1. **PostgreSQL** - 資料庫，儲存 LINE 訊息和系統資料
+        2. **LINE CRM Backend** - Node.js 後端服務，類似 n8n 的架構
+        3. **React Frontend** - 前端介面，對話管理儀表板
+        4. **n8n** - 工作流自動化引擎，處理 LINE Webhook
+        
+        ## 優勢
+        
+        **相比 PostgREST 架構的優勢：**
+        - ✅ **效能更好**：直接資料庫連接，無 HTTP 轉換開銷
+        - ✅ **控制更精確**：可以執行複雜的 SQL 查詢和事務
+        - ✅ **架構更簡單**：減少中間層，類似 n8n 的設計
+        - ✅ **自動初始化**：後端啟動時自動檢查並初始化資料庫
+        - ✅ **更好的錯誤處理**：統一的錯誤處理和日誌記錄
+        
+        ## 部署後設定步驟
+        
+        ### 步驟 1：系統自動初始化
+        
+        後端服務會在啟動時自動檢查並初始化資料庫，無需手動操作。
+        
+        ### 步驟 2：設定 n8n Workflow
+        
+        訪問 n8n 域名，建立 LINE Webhook 處理流程
+        
+        ### 步驟 3：設定 LINE Webhook
+        
+        在 LINE Developers Console 設定 Webhook URL
+        
+        ### 步驟 4：補充 LINE 憑證
+        
+        在 n8n 服務環境變數中新增：
+        LINE_CHANNEL_ACCESS_TOKEN
+        LINE_CHANNEL_SECRET
+        
+        ### 步驟 5：設定 Frontend 環境變數
+        
+        在 frontend 服務環境變數中新增：
+        VITE_BACKEND_URL=https://你的Backend域名.zeabur.app
+        VITE_N8N_API=https://你的n8n域名.zeabur.app
+        
+        ## 驗證部署
+        
+        1. 測試 Backend API: https://你的Backend域名.zeabur.app/api/health
+        2. 測試 Frontend 顯示
+        3. 測試 n8n 能否登入
+        4. 測試 LINE Bot 訊息接收
+    
+    services:
+        - name: postgresql
+          icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
+          template: PREBUILT_V2
+          spec:
+            source:
+                image: postgres:17
+            ports:
+                - id: database
+                  port: 5432
+                  type: TCP
+            volumes:
+                - id: data
+                  dir: /var/lib/postgresql/data
+            env:
+                PGDATA:
+                    default: /var/lib/postgresql/data/pgdata
+                POSTGRES_CONNECTION_STRING:
+                    default: postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+                    expose: true
+                POSTGRES_DATABASE:
+                    default: ${POSTGRES_DB}
+                    expose: true
+                POSTGRES_DB:
+                    default: zeabur
+                POSTGRES_HOST:
+                    default: ${CONTAINER_HOSTNAME}
+                    expose: true
+                POSTGRES_PASSWORD:
+                    default: ${PASSWORD}
+                    expose: true
+                POSTGRES_PORT:
+                    default: ${DATABASE_PORT}
+                    expose: true
+                POSTGRES_USER:
+                    default: root
+                POSTGRES_USERNAME:
+                    default: ${POSTGRES_USER}
+                    expose: true
+            portForwarding:
+                enabled: true
+        
+        - name: line-crm-backend
+          icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/nodejs.svg
+          template: PREBUILT_V2
+          domainKey: BACKEND_DOMAIN
+          spec:
+            source:
+                source: GITHUB
+                repo: 1080205971
+                branch: main
+                rootDirectory: /backend
+            ports:
+                - id: http
+                  port: 3000
+                  type: HTTP
+            env:
+                # 資料庫連接環境變數 (類似 n8n)
+                DB_POSTGRESDB_DATABASE:
+                    default: ${POSTGRES_DATABASE}
+                DB_POSTGRESDB_HOST:
+                    default: ${POSTGRES_HOST}
+                DB_POSTGRESDB_PASSWORD:
+                    default: ${POSTGRES_PASSWORD}
+                DB_POSTGRESDB_PORT:
+                    default: ${POSTGRES_PORT}
+                DB_POSTGRESDB_USER:
+                    default: ${POSTGRES_USERNAME}
+                DB_TYPE:
+                    default: postgresdb
+                # 應用程式配置
+                NODE_ENV:
+                    default: production
+                PORT:
+                    default: "3000"
+                FRONTEND_URL:
+                    default: https://${FRONTEND_DOMAIN}.zeabur.app
+            portForwarding:
+                enabled: false
+        
+        - name: n8n
+          icon: https://img.5xcamp.us/i/2732381b-be89-478f-9f82-7d63beed4d81.png
+          template: PREBUILT_V2
+          domainKey: N8N_DOMAIN
+          spec:
+            source:
+                image: n8nio/n8n:latest
+            ports:
+                - id: web
+                  port: 5678
+                  type: HTTP
+            volumes:
+                - id: data
+                  dir: /root/.n8n
+            env:
+                # 資料庫連接環境變數 (與 Backend 共享同一個資料庫)
+                DB_POSTGRESDB_DATABASE:
+                    default: ${POSTGRES_DATABASE}
+                DB_POSTGRESDB_HOST:
+                    default: ${POSTGRES_HOST}
+                DB_POSTGRESDB_PASSWORD:
+                    default: ${POSTGRES_PASSWORD}
+                DB_POSTGRESDB_PORT:
+                    default: ${POSTGRES_PORT}
+                DB_POSTGRESDB_USER:
+                    default: ${POSTGRES_USERNAME}
+                DB_TYPE:
+                    default: postgresdb
+                N8N_HOST:
+                    default: ${ZEABUR_WEB_DOMAIN}
+                WEBHOOK_URL:
+                    default: ${ZEABUR_WEB_URL}
+            portForwarding:
+                enabled: false
+        
+        - name: frontend
+          icon: https://service-icons.zeabur.com/git/nodejs/vite.svg
+          template: PREBUILT_V2
+          domainKey: FRONTEND_DOMAIN
+          spec:
+            source:
+                source: GITHUB
+                repo: 1080205971
+                branch: main
+                rootDirectory: /
+            ports:
+                - id: web
+                  port: 8080
+                  type: HTTP
+            env:
+                PORT:
+                    default: ${WEB_PORT}
+                # 連接 Backend API (替代 PostgREST)
+                VITE_BACKEND_URL:
+                    default: https://${BACKEND_DOMAIN}.zeabur.app
+                VITE_N8N_API:
+                    default: https://${N8N_DOMAIN}.zeabur.app
+            portForwarding:
+                enabled: false
+
+localization:
+    zh-TW:
+        description: LINE CRM (n8n 風格架構)
+        readme: |
+            # LINE CRM (n8n 風格架構)
+            
+            採用類似 n8n 架構的 LINE CRM 系統，提供更好的效能和更簡單的架構。
