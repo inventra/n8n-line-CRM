@@ -123,6 +123,16 @@ const initDatabase = async () => {
   }
 };
 
+// 根路由
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'LINE CRM Backend API',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // API 路由
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -321,7 +331,13 @@ app.use((error, req, res, next) => {
 
 // 404 處理
 app.use('*', (req, res) => {
-  res.status(404).json({ error: 'API 端點不存在' });
+  console.log(`404 - 請求路徑: ${req.originalUrl}`);
+  res.status(404).json({ 
+    error: 'API 端點不存在',
+    path: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 啟動伺服器
