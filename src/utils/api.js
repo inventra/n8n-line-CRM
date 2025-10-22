@@ -1,6 +1,11 @@
 // API 工具 - 連接 Backend 服務 (替代 PostgREST)
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
+console.log('API 配置:', {
+  VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+  API_BASE_URL: API_BASE_URL
+});
+
 // 通用 API 請求函數
 const apiRequest = async (endpoint, options = {}) => {
   try {

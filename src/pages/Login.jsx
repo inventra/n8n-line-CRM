@@ -45,8 +45,8 @@ const Login = () => {
         console.log('已載入本地設定:', config);
       }
 
-      // 如果有 API，也從資料庫載入
-      if (import.meta.env.VITE_API_BASE) {
+      // 如果有 Backend API，也從資料庫載入
+      if (import.meta.env.VITE_BACKEND_URL) {
         await loadConfigFromDatabase();
       }
     } catch (error) {
@@ -56,7 +56,7 @@ const Login = () => {
 
   const loadConfigFromDatabase = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings?key=in.(LINE_CHANNEL_ACCESS_TOKEN,LINE_CHANNEL_SECRET)`);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/system-settings`);
       if (response.ok) {
         const settings = await response.json();
         const config = {};
@@ -126,8 +126,8 @@ const Login = () => {
       setShowConfigModal(false);
       message.success('LINE 憑證設定成功！');
       
-      // 如果有 API，也保存到資料庫
-      if (import.meta.env.VITE_API_BASE) {
+      // 如果有 Backend API，也保存到資料庫
+      if (import.meta.env.VITE_BACKEND_URL) {
         await saveConfigToDatabase(values);
       }
     } catch (error) {
@@ -138,28 +138,24 @@ const Login = () => {
 
   const saveConfigToDatabase = async (values) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
-        method: 'POST',
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/system-settings/LINE_CHANNEL_ACCESS_TOKEN`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          key: 'LINE_CHANNEL_ACCESS_TOKEN',
-          value: values.clientId,
-          description: 'LINE Bot Channel Access Token'
+          value: values.clientId
         }),
       });
 
       if (response.ok) {
-        await fetch(`${import.meta.env.VITE_API_BASE}/system_settings`, {
-          method: 'POST',
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/system-settings/LINE_CHANNEL_SECRET`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            key: 'LINE_CHANNEL_SECRET',
-            value: values.clientSecret,
-            description: 'LINE Bot Channel Secret'
+            value: values.clientSecret
           }),
         });
       }

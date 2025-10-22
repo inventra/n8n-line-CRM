@@ -17,11 +17,50 @@ const dbConfig = {
   user: process.env.DB_POSTGRESDB_USER || process.env.POSTGRES_USERNAME,
   password: process.env.DB_POSTGRESDB_PASSWORD || process.env.POSTGRES_PASSWORD,
   // 修復 SSL 連接問題
-  ssl: false  // 在 Zeabur 內部網絡中不需要 SSL
+  ssl: false,  // 在 Zeabur 內部網絡中不需要 SSL
+  // 連接超時設定
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 20
 };
+
+// 如果提供了 DATABASE_URL，使用它
+if (process.env.DATABASE_URL) {
+  console.log('使用 DATABASE_URL 連接資料庫');
+  // 解析 DATABASE_URL
+  const url = new URL(process.env.DATABASE_URL);
+  dbConfig.host = url.hostname;
+  dbConfig.port = url.port;
+  dbConfig.database = url.pathname.slice(1);
+  dbConfig.user = url.username;
+  dbConfig.password = url.password;
+}
 
 // 建立資料庫連接池
 const pool = new Pool(dbConfig);
+
+// 測試資料庫連接
+const testDatabaseConnection = async () => {
+  try {
+    console.log('測試資料庫連接...');
+    console.log('連接配置:', {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      user: dbConfig.user
+    });
+    
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW() as current_time');
+    console.log('✅ 資料庫連接成功:', result.rows[0]);
+    client.release();
+    return true;
+  } catch (error) {
+    console.error('❌ 資料庫連接失敗:', error.message);
+    console.error('連接配置:', dbConfig);
+    return false;
+  }
+};
 
 // 中間件配置
 app.use(helmet());
@@ -288,6 +327,13 @@ app.use('*', (req, res) => {
 // 啟動伺服器
 const startServer = async () => {
   try {
+    // 測試資料庫連接
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      console.error('資料庫連接失敗，伺服器無法啟動');
+      process.exit(1);
+    }
+    
     // 初始化資料庫
     const dbInitialized = await initializeDatabase();
     if (!dbInitialized) {

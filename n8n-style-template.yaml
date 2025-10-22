@@ -194,6 +194,9 @@ spec:
                     default: "3000"
                 FRONTEND_URL:
                     default: https://${FRONTEND_DOMAIN}.zeabur.app
+                # 資料庫連接字串 (備用)
+                DATABASE_URL:
+                    default: ${POSTGRES_CONNECTION_STRING}
             portForwarding:
                 enabled: false
         
