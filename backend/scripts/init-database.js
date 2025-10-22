@@ -17,7 +17,8 @@ const dbConfig = {
   database: process.env.DB_POSTGRESDB_DATABASE || process.env.POSTGRES_DATABASE,
   user: process.env.DB_POSTGRESDB_USER || process.env.POSTGRES_USERNAME,
   password: process.env.DB_POSTGRESDB_PASSWORD || process.env.POSTGRES_PASSWORD,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  // 修復 SSL 連接問題
+  ssl: false  // 在 Zeabur 內部網絡中不需要 SSL
 };
 
 const pool = new Pool(dbConfig);
