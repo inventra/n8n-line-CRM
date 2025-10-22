@@ -1,0 +1,48 @@
+# 依賴目錄
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 建置輸出
+dist
+build
+
+# 環境變數檔案
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE 檔案
+.vscode
+.idea
+*.swp
+*.swo
+
+# 作業系統檔案
+.DS_Store
+Thumbs.db
+
+# Git 檔案
+.git
+.gitignore
+
+# 測試檔案
+coverage
+.nyc_output
+
+# 日誌檔案
+logs
+*.log
+
+# 快取檔案
+.cache
+.parcel-cache
+
+# 其他
+README.md
+Dockerfile*
+docker-compose*
+.dockerignore
